@@ -1,3 +1,4 @@
+import '../../core/utils/type_converters.dart';
 import '../../domain/entities/dashboard_summary.dart';
 
 class DashboardSummaryModel extends DashboardSummary {
@@ -12,12 +13,12 @@ class DashboardSummaryModel extends DashboardSummary {
 
   factory DashboardSummaryModel.fromJson(Map<String, dynamic> json) {
     return DashboardSummaryModel(
-      weeklySales: (json['weekly_sales'] as num).toDouble(),
-      monthlyProfit: (json['monthly_profit'] as num).toDouble(),
-      totalCustomers: json['total_customers'] as int,
-      totalFlowers: json['total_flowers'] as int,
-      pendingPayments: (json['pending_payments'] as num).toDouble(),
-      todayTransactions: json['today_transactions'] as int,
+      weeklySales: TypeConverters.toDouble(json['weekly_sales']),
+      monthlyProfit: TypeConverters.toDouble(json['monthly_profit']),
+      totalCustomers: TypeConverters.toInt(json['total_customers']),
+      totalFlowers: TypeConverters.toInt(json['total_flowers']),
+      pendingPayments: TypeConverters.toDouble(json['pending_payments']),
+      todayTransactions: TypeConverters.toInt(json['today_transactions']),
     );
   }
 }

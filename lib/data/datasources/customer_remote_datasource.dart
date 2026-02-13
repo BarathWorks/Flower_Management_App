@@ -49,8 +49,8 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   Future<CustomerModel> getCustomerById(String id) async {
     try {
       final result = await database.connection.execute(
-        'SELECT * FROM customers WHERE id = @id',
-        parameters: {'id': id},
+        'SELECT * FROM customers WHERE id = \$1',
+        parameters: [id],
       );
 
       if (result.isEmpty) {
@@ -78,12 +78,8 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   }) async {
     try {
       await database.connection.execute(
-        'INSERT INTO customers (name, phone, address) VALUES (@name, @phone, @address)',
-        parameters: {
-          'name': name,
-          'phone': phone,
-          'address': address,
-        },
+        'INSERT INTO customers (name, phone, address) VALUES (\$1, \$2, \$3)',
+        parameters: [name, phone, address],
       );
     } catch (e) {
       throw DatabaseException('Failed to add customer: $e');
@@ -99,13 +95,8 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   }) async {
     try {
       await database.connection.execute(
-        'UPDATE customers SET name = @name, phone = @phone, address = @address WHERE id = @id',
-        parameters: {
-          'id': id,
-          'name': name,
-          'phone': phone,
-          'address': address,
-        },
+        'UPDATE customers SET name = \$2, phone = \$3, address = \$4 WHERE id = \$1',
+        parameters: [id, name, phone, address],
       );
     } catch (e) {
       throw DatabaseException('Failed to update customer: $e');
@@ -116,8 +107,8 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   Future<void> deleteCustomer(String id) async {
     try {
       await database.connection.execute(
-        'DELETE FROM customers WHERE id = @id',
-        parameters: {'id': id},
+        'DELETE FROM customers WHERE id = \$1',
+        parameters: [id],
       );
     } catch (e) {
       throw DatabaseException('Failed to delete customer: $e');

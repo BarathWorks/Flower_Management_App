@@ -1,4 +1,5 @@
 import '../../core/error/exceptions.dart';
+import '../../core/utils/type_converters.dart';
 import '../models/bill_model.dart';
 import 'neon_database.dart';
 
@@ -26,12 +27,8 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
   }) async {
     try {
       final result = await database.connection.execute(
-        'SELECT generate_monthly_bill(@customerId, @year, @month)',
-        parameters: {
-          'customerId': customerId,
-          'year': year,
-          'month': month,
-        },
+        'SELECT generate_monthly_bill(\$1, \$2, \$3)',
+        parameters: [customerId, year, month],
       );
 
       return result.first[0] as String;
@@ -49,9 +46,9 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
         SELECT b.*, c.name as customer_name
         FROM bills b
         JOIN customers c ON b.customer_id = c.id
-        WHERE b.id = @billId
+        WHERE b.id = \$1
         ''',
-        parameters: {'billId': billId},
+        parameters: [billId],
       );
 
       if (billResult.isEmpty) {
@@ -64,9 +61,9 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
         SELECT bi.*, f.name as flower_name
         FROM bill_items bi
         JOIN flowers f ON bi.flower_id = f.id
-        WHERE bi.bill_id = @billId
+        WHERE bi.bill_id = \$1
         ''',
-        parameters: {'billId': billId},
+        parameters: [billId],
       );
 
       final billRow = billResult.first;
@@ -75,10 +72,10 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
           id: row[0] as String,
           flowerId: row[2] as String,
           flowerName: row[6] as String,
-          totalQuantity: (row[3] as num).toDouble(),
-          totalAmount: (row[4] as num).toDouble(),
-          totalCommission: (row[5] as num).toDouble(),
-          netAmount: (row[3] as num).toDouble(),
+          totalQuantity: TypeConverters.toDouble(row[3]),
+          totalAmount: TypeConverters.toDouble(row[4]),
+          totalCommission: TypeConverters.toDouble(row[5]),
+          netAmount: TypeConverters.toDouble(row[3]),
         );
       }).toList();
 
@@ -89,11 +86,11 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
         customerName: billRow[12] as String,
         billYear: billRow[3] as int,
         billMonth: billRow[4] as int,
-        totalQuantity: (billRow[5] as num).toDouble(),
-        totalAmount: (billRow[6] as num).toDouble(),
-        totalCommission: (billRow[7] as num).toDouble(),
-        totalExpense: (billRow[8] as num).toDouble(),
-        netAmount: (billRow[9] as num).toDouble(),
+        totalQuantity: TypeConverters.toDouble(billRow[5]),
+        totalAmount: TypeConverters.toDouble(billRow[6]),
+        totalCommission: TypeConverters.toDouble(billRow[7]),
+        totalExpense: TypeConverters.toDouble(billRow[8]),
+        netAmount: TypeConverters.toDouble(billRow[9]),
         status: billRow[10] as String,
         generatedAt: billRow[11] as DateTime,
         items: items,
@@ -146,10 +143,10 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
         SELECT b.*, c.name as customer_name
         FROM bills b
         JOIN customers c ON b.customer_id = c.id
-        WHERE b.customer_id = @customerId
+        WHERE b.customer_id = \$1
         ORDER BY b.generated_at DESC
         ''',
-        parameters: {'customerId': customerId},
+        parameters: [customerId],
       );
 
       return result.map((row) {
@@ -160,11 +157,11 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
           customerName: row[12] as String,
           billYear: row[3] as int,
           billMonth: row[4] as int,
-          totalQuantity: (row[5] as num).toDouble(),
-          totalAmount: (row[6] as num).toDouble(),
-          totalCommission: (row[7] as num).toDouble(),
-          totalExpense: (row[8] as num).toDouble(),
-          netAmount: (row[9] as num).toDouble(),
+          totalQuantity: TypeConverters.toDouble(row[5]),
+          totalAmount: TypeConverters.toDouble(row[6]),
+          totalCommission: TypeConverters.toDouble(row[7]),
+          totalExpense: TypeConverters.toDouble(row[8]),
+          netAmount: TypeConverters.toDouble(row[9]),
           status: row[10] as String,
           generatedAt: row[11] as DateTime,
           items: const [],

@@ -1,3 +1,4 @@
+import '../../core/utils/type_converters.dart';
 import '../../domain/entities/bill.dart';
 
 class BillItemModel extends BillItem {
@@ -16,10 +17,10 @@ class BillItemModel extends BillItem {
       id: json['id'] as String,
       flowerId: json['flower_id'] as String,
       flowerName: json['flower_name'] as String,
-      totalQuantity: (json['total_quantity'] as num).toDouble(),
-      totalAmount: (json['total_amount'] as num).toDouble(),
-      totalCommission: (json['total_commission'] as num).toDouble(),
-      netAmount: (json['net_amount'] as num).toDouble(),
+      totalQuantity: TypeConverters.toDouble(json['total_quantity']),
+      totalAmount: TypeConverters.toDouble(json['total_amount']),
+      totalCommission: TypeConverters.toDouble(json['total_commission']),
+      netAmount: TypeConverters.toDouble(json['net_amount']),
     );
   }
 }
@@ -57,11 +58,11 @@ class BillModel extends Bill {
       customerName: json['customer_name'] as String,
       billYear: json['bill_year'] as int,
       billMonth: json['bill_month'] as int,
-      totalQuantity: (json['total_quantity'] as num).toDouble(),
-      totalAmount: (json['total_amount'] as num).toDouble(),
-      totalCommission: (json['total_commission'] as num).toDouble(),
-      totalExpense: (json['total_expense'] as num).toDouble(),
-      netAmount: (json['net_amount'] as num).toDouble(),
+      totalQuantity: TypeConverters.toDouble(json['total_quantity']),
+      totalAmount: TypeConverters.toDouble(json['total_amount']),
+      totalCommission: TypeConverters.toDouble(json['total_commission']),
+      totalExpense: TypeConverters.toDouble(json['total_expense']),
+      netAmount: TypeConverters.toDouble(json['net_amount']),
       status: json['status'] as String,
       generatedAt: DateTime.parse(json['generated_at'] as String),
       items: items,

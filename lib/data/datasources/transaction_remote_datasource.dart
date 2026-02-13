@@ -1,4 +1,5 @@
 import '../../core/error/exceptions.dart';
+import '../../core/utils/type_converters.dart';
 import '../models/transaction_model.dart';
 import 'neon_database.dart';
 
@@ -49,10 +50,10 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
         JOIN daily_flower_entry dfe ON dfc.daily_entry_id = dfe.id
         JOIN customers c ON dfc.customer_id = c.id
         JOIN flowers f ON dfe.flower_id = f.id
-        WHERE dfe.entry_date = @date
+        WHERE dfe.entry_date = \$1
         ORDER BY dfc.created_at DESC
         ''',
-        parameters: {'date': date.toIso8601String().split('T')[0]},
+        parameters: [date.toIso8601String().split('T')[0]],
       );
 
       return result.map((row) {
@@ -64,11 +65,11 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
           flowerId: row[4] as String,
           flowerName: row[5] as String,
           entryDate: row[6] as DateTime,
-          quantity: (row[7] as num).toDouble(),
-          rate: (row[8] as num).toDouble(),
-          amount: (row[9] as num).toDouble(),
-          commission: (row[10] as num).toDouble(),
-          netAmount: (row[11] as num).toDouble(),
+          quantity: TypeConverters.toDouble(row[7]),
+          rate: TypeConverters.toDouble(row[8]),
+          amount: TypeConverters.toDouble(row[9]),
+          commission: TypeConverters.toDouble(row[10]),
+          netAmount: TypeConverters.toDouble(row[11]),
           createdAt: row[12] as DateTime,
         );
       }).toList();
@@ -95,15 +96,12 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
       final entryResult = await database.connection.execute(
         '''
         INSERT INTO daily_flower_entry (entry_date, flower_id)
-        VALUES (@date, @flowerId)
+        VALUES (\$1, \$2)
         ON CONFLICT (entry_date, flower_id) 
         DO UPDATE SET entry_date = EXCLUDED.entry_date
         RETURNING id
         ''',
-        parameters: {
-          'date': dateStr,
-          'flowerId': flowerId,
-        },
+        parameters: [dateStr, flowerId],
       );
 
       final dailyEntryId = entryResult.first[0] as String;
@@ -113,17 +111,17 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
         '''
         INSERT INTO daily_flower_customer 
         (daily_entry_id, customer_id, quantity, rate, amount, commission, net_amount)
-        VALUES (@entryId, @customerId, @quantity, @rate, @amount, @commission, @netAmount)
+        VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7)
         ''',
-        parameters: {
-          'entryId': dailyEntryId,
-          'customerId': customerId,
-          'quantity': quantity,
-          'rate': rate,
-          'amount': amount,
-          'commission': commission,
-          'netAmount': netAmount,
-        },
+        parameters: [
+          dailyEntryId,
+          customerId,
+          quantity,
+          rate,
+          amount,
+          commission,
+          netAmount
+        ],
       );
     } catch (e) {
       throw DatabaseException('Failed to add transaction: $e');
@@ -134,8 +132,8 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
   Future<void> deleteTransaction(String transactionId) async {
     try {
       await database.connection.execute(
-        'DELETE FROM daily_flower_customer WHERE id = @id',
-        parameters: {'id': transactionId},
+        'DELETE FROM daily_flower_customer WHERE id = \$1',
+        parameters: [transactionId],
       );
     } catch (e) {
       throw DatabaseException('Failed to delete transaction: $e');

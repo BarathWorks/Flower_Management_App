@@ -1,4 +1,5 @@
 import '../../core/error/exceptions.dart';
+import '../../core/utils/type_converters.dart';
 import '../models/dashboard_model.dart';
 import 'neon_database.dart';
 
@@ -24,12 +25,12 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
 
       final row = result.first;
       return DashboardSummaryModel(
-        weeklySales: (row[0] as num).toDouble(),
-        monthlyProfit: (row[1] as num).toDouble(),
-        totalCustomers: row[2] as int,
-        totalFlowers: row[3] as int,
-        pendingPayments: (row[4] as num).toDouble(),
-        todayTransactions: row[5] as int,
+        weeklySales: TypeConverters.toDouble(row[0]),
+        monthlyProfit: TypeConverters.toDouble(row[1]),
+        totalCustomers: TypeConverters.toInt(row[2]),
+        totalFlowers: TypeConverters.toInt(row[3]),
+        pendingPayments: TypeConverters.toDouble(row[4]),
+        todayTransactions: TypeConverters.toInt(row[5]),
       );
     } catch (e) {
       throw DatabaseException('Failed to get dashboard summary: $e');

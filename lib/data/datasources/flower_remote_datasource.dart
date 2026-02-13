@@ -36,8 +36,8 @@ class FlowerRemoteDataSourceImpl implements FlowerRemoteDataSource {
   Future<void> addFlower(String name) async {
     try {
       await database.connection.execute(
-        'INSERT INTO flowers (name) VALUES (@name)',
-        parameters: {'name': name},
+        'INSERT INTO flowers (name) VALUES (\$1)',
+        parameters: [name],
       );
     } catch (e) {
       throw DatabaseException('Failed to add flower: $e');
@@ -48,8 +48,8 @@ class FlowerRemoteDataSourceImpl implements FlowerRemoteDataSource {
   Future<void> deleteFlower(String id) async {
     try {
       await database.connection.execute(
-        'DELETE FROM flowers WHERE id = @id',
-        parameters: {'id': id},
+        'DELETE FROM flowers WHERE id = \$1',
+        parameters: [id],
       );
     } catch (e) {
       throw DatabaseException('Failed to delete flower: $e');

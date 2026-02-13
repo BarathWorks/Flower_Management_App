@@ -1,3 +1,4 @@
+import '../../core/utils/type_converters.dart';
 import '../../domain/entities/transaction.dart';
 
 class TransactionModel extends Transaction {
@@ -26,11 +27,11 @@ class TransactionModel extends Transaction {
       flowerId: json['flower_id'] as String,
       flowerName: json['flower_name'] as String,
       entryDate: DateTime.parse(json['entry_date'] as String),
-      quantity: (json['quantity'] as num).toDouble(),
-      rate: (json['rate'] as num).toDouble(),
-      amount: (json['amount'] as num).toDouble(),
-      commission: (json['commission'] as num).toDouble(),
-      netAmount: (json['net_amount'] as num).toDouble(),
+      quantity: TypeConverters.toDouble(json['quantity']),
+      rate: TypeConverters.toDouble(json['rate']),
+      amount: TypeConverters.toDouble(json['amount']),
+      commission: TypeConverters.toDouble(json['commission']),
+      netAmount: TypeConverters.toDouble(json['net_amount']),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
