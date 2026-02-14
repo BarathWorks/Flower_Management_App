@@ -1,11 +1,21 @@
 import '../../core/error/exceptions.dart';
 import '../../core/utils/type_converters.dart';
+import '../../domain/usecases/transaction/add_transaction.dart';
 import '../models/transaction_model.dart';
+import '../models/daily_flower_entry_model.dart';
+import '../models/customer_transaction_detail_model.dart';
 import 'neon_database.dart';
 
 abstract class TransactionRemoteDataSource {
+  // Legacy methods
   Future<List<TransactionModel>> getTodayTransactions();
   Future<List<TransactionModel>> getTransactionsByDate(DateTime date);
+  
+  // New methods for daily flower entries
+  Future<List<DailyFlowerEntryModel>> getTodayDailyEntries();
+  Future<List<DailyFlowerEntryModel>> getDailyEntriesByDate(DateTime date);
+  Future<List<CustomerTransactionDetailModel>> getCustomerDetailsForEntry(String dailyEntryId);
+  
   Future<void> addTransaction({
     required String flowerId,
     required String customerId,
@@ -13,6 +23,11 @@ abstract class TransactionRemoteDataSource {
     required double quantity,
     required double rate,
     required double commission,
+  });
+  Future<void> addMultipleCustomerTransactions({
+    required String flowerId,
+    required DateTime entryDate,
+    required List<CustomerTransactionData> customers,
   });
   Future<void> deleteTransaction(String transactionId);
 }
@@ -129,6 +144,56 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
   }
 
   @override
+  Future<void> addMultipleCustomerTransactions({
+    required String flowerId,
+    required DateTime entryDate,
+    required List<CustomerTransactionData> customers,
+  }) async {
+    try {
+      final dateStr = entryDate.toIso8601String().split('T')[0];
+
+      // First, get or create daily_flower_entry
+      final entryResult = await database.connection.execute(
+        '''
+        INSERT INTO daily_flower_entry (entry_date, flower_id)
+        VALUES (\$1, \$2)
+        ON CONFLICT (entry_date, flower_id) 
+        DO UPDATE SET entry_date = EXCLUDED.entry_date
+        RETURNING id
+        ''',
+        parameters: [dateStr, flowerId],
+      );
+
+      final dailyEntryId = entryResult.first[0] as String;
+
+      // Then, insert all customer transactions
+      for (final customer in customers) {
+        final amount = customer.quantity * customer.rate;
+        final netAmount = amount - customer.commission;
+
+        await database.connection.execute(
+          '''
+          INSERT INTO daily_flower_customer 
+          (daily_entry_id, customer_id, quantity, rate, amount, commission, net_amount)
+          VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7)
+          ''',
+          parameters: [
+            dailyEntryId,
+            customer.customerId,
+            customer.quantity,
+            customer.rate,
+            amount,
+            customer.commission,
+            netAmount
+          ],
+        );
+      }
+    } catch (e) {
+      throw DatabaseException('Failed to add multiple customer transactions: $e');
+    }
+  }
+
+  @override
   Future<void> deleteTransaction(String transactionId) async {
     try {
       await database.connection.execute(
@@ -137,6 +202,71 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
       );
     } catch (e) {
       throw DatabaseException('Failed to delete transaction: $e');
+    }
+  }
+
+  @override
+  Future<List<DailyFlowerEntryModel>> getTodayDailyEntries() async {
+    return getDailyEntriesByDate(DateTime.now());
+  }
+
+  @override
+  Future<List<DailyFlowerEntryModel>> getDailyEntriesByDate(DateTime date) async {
+    try {
+      final result = await database.connection.execute(
+        '''
+        SELECT 
+          dfe.id,
+          dfe.entry_date,
+          dfe.flower_id,
+          f.name as flower_name,
+          dfe.total_quantity,
+          dfe.total_amount,
+          dfe.total_commission,
+          dfe.net_amount,
+          (SELECT COUNT(*) FROM daily_flower_customer WHERE daily_entry_id = dfe.id) as customer_count,
+          dfe.created_at
+        FROM daily_flower_entry dfe
+        JOIN flowers f ON dfe.flower_id = f.id
+        WHERE dfe.entry_date = \$1
+        ORDER BY f.name ASC
+        ''',
+        parameters: [date.toIso8601String().split('T')[0]],
+      );
+
+      return result.map((row) => DailyFlowerEntryModel.fromDatabase(row)).toList();
+    } catch (e) {
+      throw DatabaseException('Failed to get daily entries: $e');
+    }
+  }
+
+  @override
+  Future<List<CustomerTransactionDetailModel>> getCustomerDetailsForEntry(
+      String dailyEntryId) async {
+    try {
+      final result = await database.connection.execute(
+        '''
+        SELECT 
+          dfc.id,
+          dfc.customer_id,
+          c.name as customer_name,
+          dfc.quantity,
+          dfc.rate,
+          dfc.amount,
+          dfc.commission,
+          dfc.net_amount,
+          dfc.created_at
+        FROM daily_flower_customer dfc
+        JOIN customers c ON dfc.customer_id = c.id
+        WHERE dfc.daily_entry_id = \$1
+        ORDER BY c.name ASC
+        ''',
+        parameters: [dailyEntryId],
+      );
+
+      return result.map((row) => CustomerTransactionDetailModel.fromDatabase(row)).toList();
+    } catch (e) {
+      throw DatabaseException('Failed to get customer details: $e');
     }
   }
 }

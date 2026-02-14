@@ -3,21 +3,29 @@ import '../../../core/error/failures.dart';
 import '../../../core/usecases/usecase.dart';
 import '../../repositories/transaction_repository.dart';
 
-class AddTransactionParams {
-  final String flowerId;
+class CustomerTransactionData {
   final String customerId;
-  final DateTime entryDate;
   final double quantity;
   final double rate;
   final double commission;
 
-  AddTransactionParams({
-    required this.flowerId,
+  CustomerTransactionData({
     required this.customerId,
-    required this.entryDate,
     required this.quantity,
     required this.rate,
     required this.commission,
+  });
+}
+
+class AddTransactionParams {
+  final String flowerId;
+  final DateTime entryDate;
+  final List<CustomerTransactionData> customers;
+
+  AddTransactionParams({
+    required this.flowerId,
+    required this.entryDate,
+    required this.customers,
   });
 }
 
@@ -28,13 +36,10 @@ class AddTransaction implements UseCase<void, AddTransactionParams> {
 
   @override
   Future<Either<Failure, void>> call(AddTransactionParams params) async {
-    return await repository.addTransaction(
+    return await repository.addMultipleCustomerTransactions(
       flowerId: params.flowerId,
-      customerId: params.customerId,
       entryDate: params.entryDate,
-      quantity: params.quantity,
-      rate: params.rate,
-      commission: params.commission,
+      customers: params.customers,
     );
   }
 }

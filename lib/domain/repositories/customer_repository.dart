@@ -4,6 +4,10 @@ import '../entities/customer.dart';
 
 abstract class CustomerRepository {
   Future<Either<Failure, List<Customer>>> getAllCustomers();
+  Future<Either<Failure, List<Customer>>> getCustomersWithoutBills({
+    required int year,
+    required int month,
+  });
   Future<Either<Failure, Customer>> getCustomerById(String id);
   Future<Either<Failure, void>> addCustomer({
     required String name,

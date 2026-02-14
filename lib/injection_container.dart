@@ -21,6 +21,7 @@ import 'domain/usecases/bill/get_bill_details.dart';
 import 'domain/usecases/customer/add_customer.dart';
 import 'domain/usecases/customer/delete_customer.dart';
 import 'domain/usecases/customer/get_all_customers.dart';
+import 'domain/usecases/customer/get_customers_without_bills.dart';
 import 'domain/usecases/customer/update_customer.dart';
 import 'domain/usecases/dashboard/get_dashboard_summary.dart';
 import 'domain/usecases/flower/add_flower.dart';
@@ -30,6 +31,9 @@ import 'domain/usecases/transaction/add_transaction.dart';
 import 'domain/usecases/transaction/delete_transaction.dart';
 import 'domain/usecases/transaction/get_today_transactions.dart';
 import 'domain/usecases/transaction/get_transactions_by_date.dart';
+import 'domain/usecases/transaction/get_today_daily_entries.dart';
+import 'domain/usecases/transaction/get_daily_entries_by_date.dart';
+import 'domain/usecases/transaction/get_customer_details_for_entry.dart';
 import 'presentation/bloc/bill/bill_bloc.dart';
 import 'presentation/bloc/customer/customer_bloc.dart';
 import 'presentation/bloc/dashboard/dashboard_bloc.dart';
@@ -66,6 +70,9 @@ Future<void> init() async {
     () => TransactionBloc(
       getTodayTransactions: sl(),
       getTransactionsByDate: sl(),
+      getTodayDailyEntries: sl(),
+      getDailyEntriesByDate: sl(),
+      getCustomerDetailsForEntry: sl(),
       addTransaction: sl(),
       deleteTransaction: sl(),
     ),
@@ -74,6 +81,9 @@ Future<void> init() async {
   // Use cases
   sl.registerLazySingleton(() => GetTodayTransactions(sl()));
   sl.registerLazySingleton(() => GetTransactionsByDate(sl()));
+  sl.registerLazySingleton(() => GetTodayDailyEntries(sl()));
+  sl.registerLazySingleton(() => GetDailyEntriesByDate(sl()));
+  sl.registerLazySingleton(() => GetCustomerDetailsForEntry(sl()));
   sl.registerLazySingleton(() => AddTransaction(sl()));
   sl.registerLazySingleton(() => DeleteTransaction(sl()));
 
@@ -100,6 +110,7 @@ Future<void> init() async {
 
   // Use cases
   sl.registerLazySingleton(() => GetAllCustomers(sl()));
+  sl.registerLazySingleton(() => GetCustomersWithoutBills(sl()));
   sl.registerLazySingleton(() => AddCustomer(sl()));
   sl.registerLazySingleton(() => UpdateCustomer(sl()));
   sl.registerLazySingleton(() => DeleteCustomer(sl()));

@@ -4,6 +4,10 @@ import 'neon_database.dart';
 
 abstract class CustomerRemoteDataSource {
   Future<List<CustomerModel>> getAllCustomers();
+  Future<List<CustomerModel>> getCustomersWithoutBills({
+    required int year,
+    required int month,
+  });
   Future<CustomerModel> getCustomerById(String id);
   Future<void> addCustomer({
     required String name,
@@ -42,6 +46,39 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       }).toList();
     } catch (e) {
       throw DatabaseException('Failed to get customers: $e');
+    }
+  }
+
+  @override
+  Future<List<CustomerModel>> getCustomersWithoutBills({
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final result = await database.connection.execute(
+        '''
+        SELECT DISTINCT c.id, c.name, c.phone, c.address, c.created_at
+        FROM customers c
+        LEFT JOIN bills b ON c.id = b.customer_id 
+          AND b.bill_year = \$1 
+          AND b.bill_month = \$2
+        WHERE b.id IS NULL
+        ORDER BY c.name ASC
+        ''',
+        parameters: [year, month],
+      );
+
+      return result.map((row) {
+        return CustomerModel(
+          id: row[0] as String,
+          name: row[1] as String,
+          phone: row[2] as String?,
+          address: row[3] as String?,
+          createdAt: row[4] as DateTime,
+        );
+      }).toList();
+    } catch (e) {
+      throw DatabaseException('Failed to get customers without bills: $e');
     }
   }
 

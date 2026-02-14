@@ -6,6 +6,8 @@ import '../../../core/utils/typography.dart';
 import '../../bloc/bill/bill_bloc.dart';
 import '../../bloc/bill/bill_event.dart';
 import '../../bloc/bill/bill_state.dart';
+import 'bill_details_screen.dart';
+import 'generate_bill_screen.dart';
 
 class BillScreen extends StatefulWidget {
   const BillScreen({super.key});
@@ -44,6 +46,26 @@ class _BillScreenState extends State<BillScreen> {
                         style: AppTypography.bodyMedium,
                       ),
                     ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GenerateBillScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_circle_outline, size: 20),
+                  label: const Text('Generate Bill'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryEmerald,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
                   ),
                 ),
               ],
@@ -112,14 +134,26 @@ class _BillScreenState extends State<BillScreen> {
                       itemCount: state.bills.length,
                       itemBuilder: (context, index) {
                         final bill = state.bills[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceDark,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Column(
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BillDetailsScreen(
+                                  billId: bill.id,
+                                  billNumber: bill.billNumber,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceDark,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
@@ -201,6 +235,7 @@ class _BillScreenState extends State<BillScreen> {
                                 ],
                               ),
                             ],
+                          ),
                           ),
                         );
                       },

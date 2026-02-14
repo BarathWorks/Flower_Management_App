@@ -23,6 +23,24 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Future<Either<Failure, List<Customer>>> getCustomersWithoutBills({
+    required int year,
+    required int month,
+  }) async {
+    try {
+      final customers = await remoteDataSource.getCustomersWithoutBills(
+        year: year,
+        month: month,
+      );
+      return Right(customers);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, Customer>> getCustomerById(String id) async {
     try {
       final customer = await remoteDataSource.getCustomerById(id);

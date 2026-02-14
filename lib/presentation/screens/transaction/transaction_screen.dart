@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/constants.dart';
-import '../../../core/utils/formatters.dart';
 import '../../../core/utils/typography.dart';
 import '../../bloc/transaction/transaction_bloc.dart';
 import '../../bloc/transaction/transaction_event.dart';
 import '../../bloc/transaction/transaction_state.dart';
 import 'add_transaction_screen.dart';
+import 'customer_details_screen.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});
@@ -19,7 +19,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<TransactionBloc>().add(LoadTodayTransactions());
+    context.read<TransactionBloc>().add(LoadTodayDailyEntries());
   }
 
   @override
@@ -92,8 +92,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   );
                 }
 
-                if (state is TransactionLoaded) {
-                  if (state.transactions.isEmpty) {
+                if (state is DailyEntriesLoaded) {
+                  if (state.entries.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -126,17 +126,33 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         AppSpacing.screenHorizontal,
                         AppSpacing.screenVertical,
                       ),
-                      itemCount: state.transactions.length,
+                      itemCount: state.entries.length,
                       itemBuilder: (context, index) {
-                        final transaction = state.transactions[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceDark,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Row(
+                        final entry = state.entries[index];
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CustomerDetailsScreen(
+                                  dailyEntryId: entry.id,
+                                  flowerName: entry.flowerName,
+                                  entryDate: entry.entryDate,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceDark,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: AppColors.primaryEmerald.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
                             children: [
                               Container(
                                 width: 48,
@@ -158,49 +174,51 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      transaction.flowerName,
-                                      style: AppTypography.titleMedium,
+                                      entry.flowerName,
+                                      style: AppTypography.titleMedium.copyWith(
+                                        color: AppColors.primaryEmerald,
+                                      ),
                                     ),
                                     const SizedBox(height: AppSpacing.xs),
                                     Text(
-                                      transaction.customerName,
+                                      '${entry.customerCount} customers • ${entry.totalQuantity.toStringAsFixed(0)} qty',
                                       style: AppTypography.bodySmall,
                                     ),
                                     const SizedBox(height: AppSpacing.xs),
-                                    Text(
-                                      '${AppFormatters.formatQuantity(transaction.quantity)} × ${AppFormatters.formatCurrency(transaction.rate)}',
-                                      style: AppTypography.bodySmall,
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '₹${entry.totalAmount.toStringAsFixed(2)}',
+                                          style: AppTypography.bodyMedium.copyWith(
+                                            color: AppColors.textPrimary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          ' - ₹${entry.totalCommission.toStringAsFixed(2)}',
+                                          style: AppTypography.bodySmall.copyWith(
+                                            color: AppColors.accentOrange,
+                                          ),
+                                        ),
+                                        Text(
+                                          ' = ₹${entry.netAmount.toStringAsFixed(2)}',
+                                          style: AppTypography.bodyMedium.copyWith(
+                                            color: AppColors.successGreen,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    AppFormatters.formatCurrency(
-                                        transaction.netAmount),
-                                    style: AppTypography.titleMedium.copyWith(
-                                      color: AppColors.successGreen,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    'Comm: ${AppFormatters.formatCurrency(transaction.commission)}',
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textTertiary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  _showDeleteDialog(context, transaction.id);
-                                },
-                                icon: const Icon(Icons.delete_outline_rounded),
-                                color: AppColors.error,
+                              const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 16,
+                                color: AppColors.textSecondary,
                               ),
                             ],
+                            ),
                           ),
                         );
                       },
@@ -210,38 +228,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
                 return const SizedBox.shrink();
               },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context, String transactionId) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: Text('Delete Transaction', style: AppTypography.headlineSmall),
-        content: Text(
-          'Are you sure you want to delete this transaction?',
-          style: AppTypography.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancel', style: AppTypography.labelLarge),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<TransactionBloc>().add(
-                    DeleteTransactionEvent(transactionId),
-                  );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(
-              'Delete',
-              style: AppTypography.labelLarge.copyWith(color: AppColors.error),
             ),
           ),
         ],
