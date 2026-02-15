@@ -16,6 +16,7 @@ import 'domain/repositories/dashboard_repository.dart';
 import 'domain/repositories/flower_repository.dart';
 import 'domain/repositories/transaction_repository.dart';
 import 'domain/usecases/bill/generate_monthly_bill.dart';
+import 'domain/usecases/bill/delete_bill.dart';
 import 'domain/usecases/bill/get_all_bills.dart';
 import 'domain/usecases/bill/get_bill_details.dart';
 import 'domain/usecases/customer/add_customer.dart';
@@ -157,6 +158,7 @@ Future<void> init() async {
       getAllBills: sl(),
       getBillDetails: sl(),
       generateMonthlyBill: sl(),
+      deleteBill: sl(),
     ),
   );
 
@@ -164,6 +166,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetAllBills(sl()));
   sl.registerLazySingleton(() => GetBillDetails(sl()));
   sl.registerLazySingleton(() => GenerateMonthlyBill(sl()));
+  sl.registerLazySingleton(() => DeleteBill(sl()));
 
   // Repository
   sl.registerLazySingleton<BillRepository>(

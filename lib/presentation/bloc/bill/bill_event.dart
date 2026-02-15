@@ -34,3 +34,12 @@ class LoadBillDetails extends BillEvent {
 }
 
 class RefreshBills extends BillEvent {}
+
+class DeleteBillEvent extends BillEvent {
+  final String billId;
+
+  const DeleteBillEvent(this.billId);
+
+  @override
+  List<Object> get props => [billId];
+}

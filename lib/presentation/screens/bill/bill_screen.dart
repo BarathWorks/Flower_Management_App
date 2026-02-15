@@ -135,8 +135,8 @@ class _BillScreenState extends State<BillScreen> {
                       itemBuilder: (context, index) {
                         final bill = state.bills[index];
                         return InkWell(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => BillDetailsScreen(
@@ -145,97 +145,103 @@ class _BillScreenState extends State<BillScreen> {
                                 ),
                               ),
                             );
+
+                            if (context.mounted) {
+                              context.read<BillBloc>().add(LoadAllBills());
+                            }
                           },
                           child: Container(
-                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                            margin:
+                                const EdgeInsets.only(bottom: AppSpacing.md),
                             padding: const EdgeInsets.all(AppSpacing.md),
                             decoration: BoxDecoration(
                               color: AppColors.surfaceDark,
                               borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryEmerald
-                                          .withOpacity(0.2),
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.sm),
-                                    ),
-                                    child: const Icon(
-                                      Icons.description_rounded,
-                                      color: AppColors.primaryEmerald,
-                                    ),
-                                  ),
-                                  const SizedBox(width: AppSpacing.md),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          bill.billNumber,
-                                          style: AppTypography.titleMedium,
-                                        ),
-                                        const SizedBox(height: AppSpacing.xs),
-                                        Text(
-                                          bill.customerName,
-                                          style: AppTypography.bodySmall,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.sm,
-                                      vertical: AppSpacing.xs,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: bill.status == 'PAID'
-                                          ? AppColors.successGreen
-                                              .withOpacity(0.2)
-                                          : AppColors.warningAmber
-                                              .withOpacity(0.2),
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.sm),
-                                    ),
-                                    child: Text(
-                                      bill.status,
-                                      style: AppTypography.bodySmall.copyWith(
-                                        color: bill.status == 'PAID'
-                                            ? AppColors.successGreen
-                                            : AppColors.warningAmber,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryEmerald
+                                            .withOpacity(0.2),
+                                        borderRadius:
+                                            BorderRadius.circular(AppRadius.sm),
+                                      ),
+                                      child: const Icon(
+                                        Icons.description_rounded,
+                                        color: AppColors.primaryEmerald,
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.md),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    AppFormatters.formatMonthYear(
-                                        bill.billYear, bill.billMonth),
-                                    style: AppTypography.bodySmall,
-                                  ),
-                                  Text(
-                                    AppFormatters.formatCurrency(
-                                        bill.netAmount),
-                                    style: AppTypography.titleMedium.copyWith(
-                                      color: AppColors.primaryEmerald,
+                                    const SizedBox(width: AppSpacing.md),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            bill.billNumber,
+                                            style: AppTypography.titleMedium,
+                                          ),
+                                          const SizedBox(height: AppSpacing.xs),
+                                          Text(
+                                            bill.customerName,
+                                            style: AppTypography.bodySmall,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                    // Removed broken print button here. Users must open details to print.
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.sm,
+                                        vertical: AppSpacing.xs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: bill.status == 'PAID'
+                                            ? AppColors.successGreen
+                                                .withOpacity(0.2)
+                                            : AppColors.warningAmber
+                                                .withOpacity(0.2),
+                                        borderRadius:
+                                            BorderRadius.circular(AppRadius.sm),
+                                      ),
+                                      child: Text(
+                                        bill.status,
+                                        style: AppTypography.bodySmall.copyWith(
+                                          color: bill.status == 'PAID'
+                                              ? AppColors.successGreen
+                                              : AppColors.warningAmber,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      AppFormatters.formatMonthYear(
+                                          bill.billYear, bill.billMonth),
+                                      style: AppTypography.bodySmall,
+                                    ),
+                                    Text(
+                                      AppFormatters.formatCurrency(
+                                          bill.netAmount),
+                                      style: AppTypography.titleMedium.copyWith(
+                                        color: AppColors.primaryEmerald,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

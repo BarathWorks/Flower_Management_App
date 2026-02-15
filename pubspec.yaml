@@ -3,33 +3,33 @@ description: Flower market management with Clean Architecture
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: ">=3.2.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  
+
   # State Management
   flutter_bloc: ^8.1.3
   equatable: ^2.0.5
-  
+
   # Dependency Injection
   get_it: ^7.6.4
-  
+
   # Functional Programming
   dartz: ^0.10.1
-  
+
   # Database
   postgres: ^3.0.2
-  
+
   # UI
   google_fonts: ^6.1.0
-  
+
   # Utilities
   intl: ^0.19.0
   uuid: ^4.2.1
   logger: ^2.0.2+1
-  
+
   # Printing
   printing: ^5.12.0
   pdf: ^3.10.7
@@ -37,9 +37,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  
+
   flutter_lints: ^3.0.1
   build_runner: ^2.4.7
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/

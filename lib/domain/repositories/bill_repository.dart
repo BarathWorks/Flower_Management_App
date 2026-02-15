@@ -11,4 +11,5 @@ abstract class BillRepository {
   Future<Either<Failure, Bill>> getBillDetails(String billId);
   Future<Either<Failure, List<Bill>>> getAllBills();
   Future<Either<Failure, List<Bill>>> getCustomerBills(String customerId);
+  Future<Either<Failure, void>> deleteBill(String billId);
 }

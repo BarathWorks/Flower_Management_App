@@ -43,6 +43,39 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android related
+**/android/local.properties
+**/android/key.properties
+**/android/**/*.keystore
+**/android/**/*.jks
+
+# iOS related
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# Windows related
+**/windows/flutter/ephemeral/
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugins.cmake
+
+# Linux related
+**/linux/flutter/ephemeral/
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugins.cmake
+
+# macOS related
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/generated_plugin_registrant.swift
+**/macos/Flutter/generated_plugins.cmake
+
+# Web related
+lib/generated_plugin_registrant.dart
+
 # Environment variables
 .env
 .env.local

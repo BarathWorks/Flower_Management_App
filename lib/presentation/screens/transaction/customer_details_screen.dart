@@ -90,105 +90,123 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen> {
 
           if (state is CustomerDetailsLoaded) {
             if (state.details.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_off_rounded,
-                      size: 64,
-                      color: AppColors.textTertiary,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text(
-                      'No customer details found',
-                      style: AppTypography.bodyLarge,
-                    ),
-                  ],
+              return PopScope(
+                canPop: true,
+                onPopInvoked: (didPop) {
+                  if (didPop) {
+                    context
+                        .read<TransactionBloc>()
+                        .add(LoadTodayDailyEntries());
+                  }
+                },
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.person_off_rounded,
+                        size: 64,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'No customer details found',
+                        style: AppTypography.bodyLarge,
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.screenHorizontal),
-              itemCount: state.details.length,
-              itemBuilder: (context, index) {
-                final detail = state.details[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceDark,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryEmerald.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          color: AppColors.primaryEmerald,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              detail.customerName,
-                              style: AppTypography.titleMedium.copyWith(
-                                color: AppColors.primaryEmerald,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              '${detail.quantity.toStringAsFixed(0)} × ₹${detail.rate.toStringAsFixed(2)}',
-                              style: AppTypography.bodySmall,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Row(
-                              children: [
-                                Text(
-                                  '₹${detail.amount.toStringAsFixed(2)}',
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  ' - ₹${detail.commission.toStringAsFixed(2)}',
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.accentOrange,
-                                  ),
-                                ),
-                                Text(
-                                  ' = ₹${detail.netAmount.toStringAsFixed(2)}',
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.successGreen,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () =>
-                            _showDeleteDialog(context, detail.id),
-                        icon: const Icon(Icons.delete_outline_rounded),
-                        color: AppColors.error,
-                      ),
-                    ],
-                  ),
-                );
+            return PopScope(
+              canPop: true,
+              onPopInvoked: (didPop) {
+                if (didPop) {
+                  context.read<TransactionBloc>().add(LoadTodayDailyEntries());
+                }
               },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(AppSpacing.screenHorizontal),
+                itemCount: state.details.length,
+                itemBuilder: (context, index) {
+                  final detail = state.details[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceDark,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryEmerald.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            color: AppColors.primaryEmerald,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                detail.customerName,
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: AppColors.primaryEmerald,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                '${detail.quantity.toStringAsFixed(0)} × ₹${detail.rate.toStringAsFixed(2)}',
+                                style: AppTypography.bodySmall,
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Row(
+                                children: [
+                                  Text(
+                                    '₹${detail.amount.toStringAsFixed(2)}',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    ' - ₹${detail.commission.toStringAsFixed(2)}',
+                                    style: AppTypography.bodySmall.copyWith(
+                                      color: AppColors.accentOrange,
+                                    ),
+                                  ),
+                                  Text(
+                                    ' = ₹${detail.netAmount.toStringAsFixed(2)}',
+                                    style: AppTypography.bodyMedium.copyWith(
+                                      color: AppColors.successGreen,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              _showDeleteDialog(context, detail.id),
+                          icon: const Icon(Icons.delete_outline_rounded),
+                          color: AppColors.error,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             );
           }
 

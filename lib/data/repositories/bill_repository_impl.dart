@@ -66,4 +66,16 @@ class BillRepositoryImpl implements BillRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> deleteBill(String billId) async {
+    try {
+      await remoteDataSource.deleteBill(billId);
+      return const Right(null);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

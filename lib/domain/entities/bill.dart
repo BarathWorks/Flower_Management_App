@@ -4,7 +4,9 @@ class BillItem extends Equatable {
   final String id;
   final String flowerId;
   final String flowerName;
-  final double totalQuantity;
+  final DateTime date;
+  final double rate;
+  final double quantity;
   final double totalAmount;
   final double totalCommission;
   final double netAmount;
@@ -13,7 +15,9 @@ class BillItem extends Equatable {
     required this.id,
     required this.flowerId,
     required this.flowerName,
-    required this.totalQuantity,
+    required this.date,
+    required this.rate,
+    required this.quantity,
     required this.totalAmount,
     required this.totalCommission,
     required this.netAmount,
@@ -24,7 +28,9 @@ class BillItem extends Equatable {
         id,
         flowerId,
         flowerName,
-        totalQuantity,
+        date,
+        rate,
+        quantity,
         totalAmount,
         totalCommission,
         netAmount,

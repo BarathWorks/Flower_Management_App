@@ -130,8 +130,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                       itemBuilder: (context, index) {
                         final entry = state.entries[index];
                         return InkWell(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => CustomerDetailsScreen(
@@ -141,83 +141,95 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                 ),
                               ),
                             );
+                            if (context.mounted) {
+                              context
+                                  .read<TransactionBloc>()
+                                  .add(LoadTodayDailyEntries());
+                            }
                           },
                           child: Container(
-                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                            margin:
+                                const EdgeInsets.only(bottom: AppSpacing.md),
                             padding: const EdgeInsets.all(AppSpacing.md),
                             decoration: BoxDecoration(
                               color: AppColors.surfaceDark,
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               border: Border.all(
-                                color: AppColors.primaryEmerald.withOpacity(0.3),
+                                color:
+                                    AppColors.primaryEmerald.withOpacity(0.3),
                               ),
                             ),
                             child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color:
-                                      AppColors.primaryEmerald.withOpacity(0.2),
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.sm),
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryEmerald
+                                        .withOpacity(0.2),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.sm),
+                                  ),
+                                  child: const Icon(
+                                    Icons.local_florist_rounded,
+                                    color: AppColors.primaryEmerald,
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.local_florist_rounded,
-                                  color: AppColors.primaryEmerald,
-                                ),
-                              ),
-                              const SizedBox(width: AppSpacing.md),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      entry.flowerName,
-                                      style: AppTypography.titleMedium.copyWith(
-                                        color: AppColors.primaryEmerald,
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        entry.flowerName,
+                                        style:
+                                            AppTypography.titleMedium.copyWith(
+                                          color: AppColors.primaryEmerald,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: AppSpacing.xs),
-                                    Text(
-                                      '${entry.customerCount} customers • ${entry.totalQuantity.toStringAsFixed(0)} qty',
-                                      style: AppTypography.bodySmall,
-                                    ),
-                                    const SizedBox(height: AppSpacing.xs),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '₹${entry.totalAmount.toStringAsFixed(2)}',
-                                          style: AppTypography.bodyMedium.copyWith(
-                                            color: AppColors.textPrimary,
-                                            fontWeight: FontWeight.bold,
+                                      const SizedBox(height: AppSpacing.xs),
+                                      Text(
+                                        '${entry.customerCount} customers • ${entry.totalQuantity.toStringAsFixed(0)} qty',
+                                        style: AppTypography.bodySmall,
+                                      ),
+                                      const SizedBox(height: AppSpacing.xs),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '₹${entry.totalAmount.toStringAsFixed(2)}',
+                                            style: AppTypography.bodyMedium
+                                                .copyWith(
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          ' - ₹${entry.totalCommission.toStringAsFixed(2)}',
-                                          style: AppTypography.bodySmall.copyWith(
-                                            color: AppColors.accentOrange,
+                                          Text(
+                                            ' - ₹${entry.totalCommission.toStringAsFixed(2)}',
+                                            style: AppTypography.bodySmall
+                                                .copyWith(
+                                              color: AppColors.accentOrange,
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          ' = ₹${entry.netAmount.toStringAsFixed(2)}',
-                                          style: AppTypography.bodyMedium.copyWith(
-                                            color: AppColors.successGreen,
-                                            fontWeight: FontWeight.bold,
+                                          Text(
+                                            ' = ₹${entry.netAmount.toStringAsFixed(2)}',
+                                            style: AppTypography.bodyMedium
+                                                .copyWith(
+                                              color: AppColors.successGreen,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 16,
-                                color: AppColors.textSecondary,
-                              ),
-                            ],
+                                const Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 16,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ],
                             ),
                           ),
                         );

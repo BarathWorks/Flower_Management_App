@@ -21,4 +21,8 @@ class AppFormatters {
   static String formatQuantity(double quantity) {
     return quantity.toStringAsFixed(2);
   }
+
+  static String formatShortDate(DateTime date) {
+    return DateFormat('d/M').format(date);
+  }
 }

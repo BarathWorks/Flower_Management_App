@@ -12,6 +12,7 @@ abstract class BillRemoteDataSource {
   Future<BillModel> getBillDetails(String billId);
   Future<List<BillModel>> getAllBills();
   Future<List<BillModel>> getCustomerBills(String customerId);
+  Future<void> deleteBill(String billId);
 }
 
 class BillRemoteDataSourceImpl implements BillRemoteDataSource {
@@ -58,24 +59,40 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
       // Get bill items with flower names
       final itemsResult = await database.connection.execute(
         '''
-        SELECT bi.*, f.name as flower_name
+        SELECT 
+          bi.id,
+          bi.flower_id,
+          bi.total_quantity,
+          bi.total_amount,
+          bi.total_commission,
+          bi.net_amount,
+          f.name as flower_name
         FROM bill_items bi
         JOIN flowers f ON bi.flower_id = f.id
         WHERE bi.bill_id = \$1
+        ORDER BY f.name ASC
         ''',
         parameters: [billId],
       );
 
       final billRow = billResult.first;
+      final generatedAt = billRow[11] as DateTime;
+
       final items = itemsResult.map((row) {
+        final totalQuantity = TypeConverters.toDouble(row[2]);
+        final totalAmount = TypeConverters.toDouble(row[3]);
+        final rate = totalQuantity > 0 ? totalAmount / totalQuantity : 0.0;
+
         return BillItemModel(
           id: row[0] as String,
-          flowerId: row[2] as String,
+          flowerId: row[1] as String,
           flowerName: row[6] as String,
-          totalQuantity: TypeConverters.toDouble(row[3]),
-          totalAmount: TypeConverters.toDouble(row[4]),
-          totalCommission: TypeConverters.toDouble(row[5]),
-          netAmount: TypeConverters.toDouble(row[3]),
+          quantity: totalQuantity,
+          totalAmount: totalAmount,
+          totalCommission: TypeConverters.toDouble(row[4]),
+          date: generatedAt,
+          rate: rate,
+          netAmount: TypeConverters.toDouble(row[5]),
         );
       }).toList();
 
@@ -92,11 +109,23 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
         totalExpense: TypeConverters.toDouble(billRow[8]),
         netAmount: TypeConverters.toDouble(billRow[9]),
         status: billRow[10] as String,
-        generatedAt: billRow[11] as DateTime,
+        generatedAt: generatedAt,
         items: items,
       );
     } catch (e) {
       throw DatabaseException('Failed to get bill details: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteBill(String billId) async {
+    try {
+      await database.connection.execute(
+        'DELETE FROM bills WHERE id = \$1',
+        parameters: [billId],
+      );
+    } catch (e) {
+      throw DatabaseException('Failed to delete bill: $e');
     }
   }
 
