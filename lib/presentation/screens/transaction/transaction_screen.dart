@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/constants.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/utils/typography.dart';
 import '../../bloc/transaction/transaction_bloc.dart';
 import '../../bloc/transaction/transaction_event.dart';
@@ -16,10 +17,63 @@ class TransactionScreen extends StatefulWidget {
 }
 
 class _TransactionScreenState extends State<TransactionScreen> {
+  DateTime _selectedDate = DateTime.now();
+
   @override
   void initState() {
     super.initState();
-    context.read<TransactionBloc>().add(LoadTodayDailyEntries());
+    _loadTransactions();
+  }
+
+  void _loadTransactions() {
+    if (_isToday(_selectedDate)) {
+      context.read<TransactionBloc>().add(LoadTodayDailyEntries());
+    } else {
+      context
+          .read<TransactionBloc>()
+          .add(LoadDailyEntriesByDate(_selectedDate));
+    }
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryEmerald,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      _loadTransactions();
+    }
+  }
+
+  void _resetToToday() {
+    setState(() {
+      _selectedDate = DateTime.now();
+    });
+    _loadTransactions();
   }
 
   @override
@@ -41,12 +95,28 @@ class _TransactionScreenState extends State<TransactionScreen> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Today\'s flower transactions',
+                        _isToday(_selectedDate)
+                            ? 'Today\'s flower transactions'
+                            : 'Transactions for ${AppFormatters.formatDate(_selectedDate)}',
                         style: AppTypography.bodyMedium,
                       ),
                     ],
                   ),
                 ),
+                if (!_isToday(_selectedDate))
+                  IconButton(
+                    onPressed: _resetToToday,
+                    tooltip: 'Reset to Today',
+                    icon: const Icon(Icons.today_rounded),
+                    color: AppColors.primaryEmerald,
+                  ),
+                IconButton(
+                  onPressed: () => _selectDate(context),
+                  tooltip: 'Select Date',
+                  icon: const Icon(Icons.calendar_month_rounded),
+                  color: AppColors.primaryEmerald,
+                ),
+                const SizedBox(width: 8),
                 IconButton(
                   onPressed: () {
                     Navigator.push(
@@ -56,6 +126,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                       ),
                     );
                   },
+                  tooltip: 'Add Transaction',
                   icon: const Icon(Icons.add_circle_rounded),
                   color: AppColors.primaryEmerald,
                   iconSize: 32,
@@ -105,7 +176,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
-                            'No transactions today',
+                            _isToday(_selectedDate)
+                                ? 'No transactions today'
+                                : 'No transactions on this date',
                             style: AppTypography.bodyLarge,
                           ),
                         ],
@@ -115,9 +188,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      context
-                          .read<TransactionBloc>()
-                          .add(RefreshTransactions());
+                      // We need to reload based on selected date, but RefreshTransactions usually just reloads today or current view.
+                      // Ideally RefreshTransactions event should handle current view context or we just trigger load again.
+                      // For now, let's just trigger load again for simplicity.
+                      _loadTransactions();
                     },
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(
@@ -142,9 +216,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                               ),
                             );
                             if (context.mounted) {
-                              context
-                                  .read<TransactionBloc>()
-                                  .add(LoadTodayDailyEntries());
+                              _loadTransactions();
                             }
                           },
                           child: Container(
