@@ -16,7 +16,29 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
   Future<DashboardSummaryModel> getDashboardSummary() async {
     try {
       final result = await database.connection.execute(
-        'SELECT * FROM dashboard_summary',
+        '''
+        SELECT
+          (SELECT COALESCE(SUM(dfc.amount), 0) 
+           FROM daily_flower_customer dfc 
+           JOIN daily_flower_entry dfe ON dfc.daily_entry_id = dfe.id 
+           WHERE dfe.entry_date >= (CURRENT_DATE - INTERVAL '7 days')) as weekly_sales,
+           
+          (SELECT COALESCE(SUM(dfc.commission), 0) 
+           FROM daily_flower_customer dfc 
+           JOIN daily_flower_entry dfe ON dfc.daily_entry_id = dfe.id 
+           WHERE DATE_TRUNC('month', dfe.entry_date) = DATE_TRUNC('month', CURRENT_DATE)) as monthly_profit,
+           
+          (SELECT COUNT(*) FROM customers) as total_customers,
+          
+          (SELECT COUNT(*) FROM flowers) as total_flowers,
+          
+          (SELECT COALESCE(SUM(net_amount), 0) FROM bills WHERE status = 'PENDING') as pending_payments,
+          
+          (SELECT COUNT(*) 
+           FROM daily_flower_customer dfc 
+           JOIN daily_flower_entry dfe ON dfc.daily_entry_id = dfe.id 
+           WHERE dfe.entry_date = CURRENT_DATE) as today_transactions
+        ''',
       );
 
       if (result.isEmpty) {

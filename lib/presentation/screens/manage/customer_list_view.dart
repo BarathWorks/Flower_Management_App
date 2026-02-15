@@ -137,6 +137,7 @@ class _CustomerListViewState extends State<CustomerListView> {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     final addressController = TextEditingController();
+    final commissionController = TextEditingController();
 
     showDialog(
       context: context,
@@ -176,6 +177,18 @@ class _CustomerListViewState extends State<CustomerListView> {
                       .copyWith(color: AppColors.textTertiary),
                 ),
               ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: commissionController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                style: AppTypography.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: 'Default Commission % (Optional)',
+                  hintStyle: AppTypography.bodyMedium
+                      .copyWith(color: AppColors.textTertiary),
+                ),
+              ),
             ],
           ),
         ),
@@ -195,6 +208,8 @@ class _CustomerListViewState extends State<CustomerListView> {
                       address: addressController.text.isEmpty
                           ? null
                           : addressController.text,
+                      defaultCommission:
+                          double.tryParse(commissionController.text),
                     ));
                 Navigator.pop(dialogContext);
               }

@@ -8,12 +8,14 @@ class UpdateCustomerParams {
   final String name;
   final String? phone;
   final String? address;
+  final double? defaultCommission;
 
   UpdateCustomerParams({
     required this.id,
     required this.name,
     this.phone,
     this.address,
+    this.defaultCommission,
   });
 }
 
@@ -29,6 +31,7 @@ class UpdateCustomer implements UseCase<void, UpdateCustomerParams> {
       name: params.name,
       phone: params.phone,
       address: params.address,
+      defaultCommission: params.defaultCommission,
     );
   }
 }

@@ -47,6 +47,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       name: event.name,
       phone: event.phone,
       address: event.address,
+      defaultCommission: event.defaultCommission,
     ));
 
     await result.fold(
@@ -68,6 +69,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       name: event.name,
       phone: event.phone,
       address: event.address,
+      defaultCommission: event.defaultCommission,
     ));
 
     await result.fold(

@@ -4,18 +4,19 @@ abstract class FlowerEvent extends Equatable {
   const FlowerEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class LoadFlowers extends FlowerEvent {}
 
 class AddFlowerEvent extends FlowerEvent {
   final String name;
+  final double? defaultRate;
 
-  const AddFlowerEvent(this.name);
+  const AddFlowerEvent(this.name, {this.defaultRate});
 
   @override
-  List<Object> get props => [name];
+  List<Object?> get props => [name, defaultRate];
 }
 
 class DeleteFlowerEvent extends FlowerEvent {

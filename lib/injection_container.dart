@@ -40,6 +40,12 @@ import 'presentation/bloc/customer/customer_bloc.dart';
 import 'presentation/bloc/dashboard/dashboard_bloc.dart';
 import 'presentation/bloc/flower/flower_bloc.dart';
 import 'presentation/bloc/transaction/transaction_bloc.dart';
+import 'presentation/bloc/settings/settings_bloc.dart';
+import 'data/datasources/settings_remote_datasource.dart';
+import 'data/repositories/settings_repository_impl.dart';
+import 'domain/repositories/settings_repository.dart';
+import 'domain/usecases/settings/get_global_commission.dart';
+import 'domain/usecases/settings/set_global_commission.dart';
 
 final sl = GetIt.instance;
 
@@ -176,6 +182,29 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<BillRemoteDataSource>(
     () => BillRemoteDataSourceImpl(database: sl()),
+  );
+
+  //! Features - Settings
+  // Bloc
+  sl.registerFactory(
+    () => SettingsBloc(
+      getGlobalCommission: sl(),
+      setGlobalCommission: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetGlobalCommission(sl()));
+  sl.registerLazySingleton(() => SetGlobalCommission(sl()));
+
+  // Repository
+  sl.registerLazySingleton<SettingsRepository>(
+    () => SettingsRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<SettingsRemoteDataSource>(
+    () => SettingsRemoteDataSourceImpl(database: sl()),
   );
 
   //! Core

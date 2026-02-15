@@ -6,6 +6,7 @@ class CustomerModel extends Customer {
     required super.name,
     super.phone,
     super.address,
+    super.defaultCommission,
     required super.createdAt,
   });
 
@@ -15,6 +16,9 @@ class CustomerModel extends Customer {
       name: json['name'] as String,
       phone: json['phone'] as String?,
       address: json['address'] as String?,
+      defaultCommission: json['default_commission'] != null
+          ? (json['default_commission'] as num).toDouble()
+          : null,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -25,6 +29,7 @@ class CustomerModel extends Customer {
       'name': name,
       'phone': phone,
       'address': address,
+      'default_commission': defaultCommission,
       'created_at': createdAt.toIso8601String(),
     };
   }

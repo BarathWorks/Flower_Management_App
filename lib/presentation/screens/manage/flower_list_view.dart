@@ -125,24 +125,47 @@ class _FlowerListViewState extends State<FlowerListView> {
 
   void _showAddDialog(BuildContext context) {
     final controller = TextEditingController();
+    final rateController = TextEditingController();
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surfaceDark,
         title: Text('Add Flower', style: AppTypography.headlineSmall),
-        content: TextField(
-          controller: controller,
-          style: AppTypography.bodyMedium,
-          decoration: InputDecoration(
-            hintText: 'Flower name',
-            hintStyle: AppTypography.bodyMedium
-                .copyWith(color: AppColors.textTertiary),
-            filled: true,
-            fillColor: AppColors.backgroundDark,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              style: AppTypography.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Flower name',
+                hintStyle: AppTypography.bodyMedium
+                    .copyWith(color: AppColors.textTertiary),
+                filled: true,
+                fillColor: AppColors.backgroundDark,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: rateController,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              style: AppTypography.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Default Rate (Optional)',
+                hintStyle: AppTypography.bodyMedium
+                    .copyWith(color: AppColors.textTertiary),
+                filled: true,
+                fillColor: AppColors.backgroundDark,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -152,7 +175,11 @@ class _FlowerListViewState extends State<FlowerListView> {
           TextButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
-                context.read<FlowerBloc>().add(AddFlowerEvent(controller.text));
+                final rate = double.tryParse(rateController.text);
+                context.read<FlowerBloc>().add(AddFlowerEvent(
+                      controller.text,
+                      defaultRate: rate,
+                    ));
                 Navigator.pop(dialogContext);
               }
             },

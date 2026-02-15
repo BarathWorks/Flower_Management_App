@@ -13,12 +13,14 @@ abstract class CustomerRemoteDataSource {
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   });
   Future<void> updateCustomer({
     required String id,
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   });
   Future<void> deleteCustomer(String id);
 }
@@ -32,7 +34,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   Future<List<CustomerModel>> getAllCustomers() async {
     try {
       final result = await database.connection.execute(
-        'SELECT * FROM customers ORDER BY name ASC',
+        'SELECT id, name, phone, address, created_at, default_commission FROM customers ORDER BY name ASC',
       );
 
       return result.map((row) {
@@ -42,6 +44,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           phone: row[2] as String?,
           address: row[3] as String?,
           createdAt: row[4] as DateTime,
+          defaultCommission: row[5] as double?,
         );
       }).toList();
     } catch (e) {
@@ -56,15 +59,13 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   }) async {
     try {
       final result = await database.connection.execute(
-        '''
-        SELECT DISTINCT c.id, c.name, c.phone, c.address, c.created_at
-        FROM customers c
-        LEFT JOIN bills b ON c.id = b.customer_id 
-          AND b.bill_year = \$1 
-          AND b.bill_month = \$2
-        WHERE b.id IS NULL
-        ORDER BY c.name ASC
-        ''',
+        'SELECT DISTINCT c.id, c.name, c.phone, c.address, c.created_at, c.default_commission '
+        'FROM customers c '
+        'LEFT JOIN bills b ON c.id = b.customer_id '
+        'AND b.bill_year = \$1 '
+        'AND b.bill_month = \$2 '
+        'WHERE b.id IS NULL '
+        'ORDER BY c.name ASC',
         parameters: [year, month],
       );
 
@@ -75,6 +76,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
           phone: row[2] as String?,
           address: row[3] as String?,
           createdAt: row[4] as DateTime,
+          defaultCommission: row[5] as double?,
         );
       }).toList();
     } catch (e) {
@@ -86,7 +88,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
   Future<CustomerModel> getCustomerById(String id) async {
     try {
       final result = await database.connection.execute(
-        'SELECT * FROM customers WHERE id = \$1',
+        'SELECT id, name, phone, address, created_at, default_commission FROM customers WHERE id = \$1',
         parameters: [id],
       );
 
@@ -101,6 +103,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         phone: row[2] as String?,
         address: row[3] as String?,
         createdAt: row[4] as DateTime,
+        defaultCommission: row[5] as double?,
       );
     } catch (e) {
       throw DatabaseException('Failed to get customer: $e');
@@ -112,11 +115,12 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   }) async {
     try {
       await database.connection.execute(
-        'INSERT INTO customers (name, phone, address) VALUES (\$1, \$2, \$3)',
-        parameters: [name, phone, address],
+        'INSERT INTO customers (name, phone, address, default_commission) VALUES (\$1, \$2, \$3, \$4)',
+        parameters: [name, phone, address, defaultCommission],
       );
     } catch (e) {
       throw DatabaseException('Failed to add customer: $e');
@@ -129,11 +133,12 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   }) async {
     try {
       await database.connection.execute(
-        'UPDATE customers SET name = \$2, phone = \$3, address = \$4 WHERE id = \$1',
-        parameters: [id, name, phone, address],
+        'UPDATE customers SET name = \$2, phone = \$3, address = \$4, default_commission = \$5 WHERE id = \$1',
+        parameters: [id, name, phone, address, defaultCommission],
       );
     } catch (e) {
       throw DatabaseException('Failed to update customer: $e');

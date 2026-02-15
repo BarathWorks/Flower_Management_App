@@ -13,12 +13,14 @@ abstract class CustomerRepository {
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   });
   Future<Either<Failure, void>> updateCustomer({
     required String id,
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   });
   Future<Either<Failure, void>> deleteCustomer(String id);
 }

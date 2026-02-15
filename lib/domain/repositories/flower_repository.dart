@@ -4,6 +4,6 @@ import '../entities/flower.dart';
 
 abstract class FlowerRepository {
   Future<Either<Failure, List<Flower>>> getAllFlowers();
-  Future<Either<Failure, void>> addFlower(String name);
+  Future<Either<Failure, void>> addFlower(String name, double? defaultRate);
   Future<Either<Failure, void>> deleteFlower(String id);
 }

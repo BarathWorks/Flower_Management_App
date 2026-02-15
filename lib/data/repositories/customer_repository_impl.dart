@@ -57,12 +57,14 @@ class CustomerRepositoryImpl implements CustomerRepository {
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   }) async {
     try {
       await remoteDataSource.addCustomer(
         name: name,
         phone: phone,
         address: address,
+        defaultCommission: defaultCommission,
       );
       return const Right(null);
     } on DatabaseException catch (e) {
@@ -78,6 +80,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     required String name,
     String? phone,
     String? address,
+    double? defaultCommission,
   }) async {
     try {
       await remoteDataSource.updateCustomer(
@@ -85,6 +88,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
         name: name,
         phone: phone,
         address: address,
+        defaultCommission: defaultCommission,
       );
       return const Right(null);
     } on DatabaseException catch (e) {

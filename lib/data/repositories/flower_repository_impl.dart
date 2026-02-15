@@ -23,9 +23,10 @@ class FlowerRepositoryImpl implements FlowerRepository {
   }
 
   @override
-  Future<Either<Failure, void>> addFlower(String name) async {
+  Future<Either<Failure, void>> addFlower(
+      String name, double? defaultRate) async {
     try {
-      await remoteDataSource.addFlower(name);
+      await remoteDataSource.addFlower(name, defaultRate);
       return const Right(null);
     } on DatabaseException catch (e) {
       return Left(DatabaseFailure(e.message));

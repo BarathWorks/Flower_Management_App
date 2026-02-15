@@ -12,6 +12,9 @@ import '../../bloc/flower/flower_event.dart';
 import '../../bloc/flower/flower_state.dart';
 import '../../bloc/transaction/transaction_bloc.dart';
 import '../../bloc/transaction/transaction_event.dart';
+import '../../bloc/settings/settings_bloc.dart';
+import '../../bloc/settings/settings_event.dart';
+import '../../bloc/settings/settings_state.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/gradient_scaffold.dart';
@@ -51,7 +54,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String? _selectedFlowerId;
   String? _selectedCustomerId;
   DateTime _selectedDate = DateTime.now();
-  
+
   final List<CustomerTransactionEntry> _customerEntries = [];
   List<Customer> _availableCustomers = [];
 
@@ -60,6 +63,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     super.initState();
     context.read<FlowerBloc>().add(LoadFlowers());
     context.read<CustomerBloc>().add(LoadCustomers());
+    context.read<SettingsBloc>().add(LoadSettings());
   }
 
   @override
@@ -84,7 +88,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           rate: double.parse(_rateController.text),
           commission: double.parse(_commissionController.text),
         ));
-        
+
         // Clear form
         _selectedCustomerId = null;
         _quantityController.clear();
@@ -128,23 +132,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       return;
     }
 
-    final customers = _customerEntries.map((entry) => 
-      CustomerTransactionData(
-        customerId: entry.customerId,
-        quantity: entry.quantity,
-        rate: entry.rate,
-        commission: entry.commission,
-      )
-    ).toList();
+    final customers = _customerEntries
+        .map((entry) => CustomerTransactionData(
+              customerId: entry.customerId,
+              quantity: entry.quantity,
+              rate: entry.rate,
+              commission: entry.commission,
+            ))
+        .toList();
 
     context.read<TransactionBloc>().add(
-      AddMultipleCustomerTransactionEvent(
-        flowerId: _selectedFlowerId!,
-        entryDate: _selectedDate,
-        customers: customers,
-      ),
-    );
-    
+          AddMultipleCustomerTransactionEvent(
+            flowerId: _selectedFlowerId!,
+            entryDate: _selectedDate,
+            customers: customers,
+          ),
+        );
+
     Navigator.pop(context);
   }
 
@@ -199,6 +203,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 onChanged: (value) {
                                   setState(() {
                                     _selectedFlowerId = value;
+                                    final selectedFlower = state.flowers
+                                        .firstWhere((f) => f.id == value);
+                                    if (selectedFlower.defaultRate != null) {
+                                      _rateController.text =
+                                          selectedFlower.defaultRate.toString();
+                                    }
                                   });
                                 },
                               ),
@@ -208,11 +218,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         return const CircularProgressIndicator();
                       },
                     ),
-                    
+
                     const SizedBox(height: AppSpacing.lg),
                     Divider(color: AppColors.textTertiary),
                     const SizedBox(height: AppSpacing.lg),
-                    
+
                     // Add Customer Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -225,13 +235,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    
+
                     Form(
                       key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Select Customer', style: AppTypography.labelLarge),
+                          Text('Select Customer',
+                              style: AppTypography.labelLarge),
                           const SizedBox(height: AppSpacing.sm),
                           BlocBuilder<CustomerBloc, CustomerState>(
                             builder: (context, state) {
@@ -242,7 +253,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                       horizontal: AppSpacing.md),
                                   decoration: BoxDecoration(
                                     color: AppColors.surfaceDark,
-                                    borderRadius: BorderRadius.circular(AppRadius.md),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.md),
                                   ),
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
@@ -261,6 +273,33 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                       onChanged: (value) {
                                         setState(() {
                                           _selectedCustomerId = value;
+                                          final selectedCustomer = state
+                                              .customers
+                                              .firstWhere((c) => c.id == value);
+
+                                          if (selectedCustomer
+                                                  .defaultCommission !=
+                                              null) {
+                                            _commissionController.text =
+                                                selectedCustomer
+                                                    .defaultCommission
+                                                    .toString();
+                                          } else {
+                                            final settingsState = context
+                                                .read<SettingsBloc>()
+                                                .state;
+                                            if (settingsState
+                                                    is SettingsLoaded &&
+                                                settingsState
+                                                        .globalCommission !=
+                                                    null) {
+                                              _commissionController.text =
+                                                  settingsState.globalCommission
+                                                      .toString();
+                                            } else {
+                                              _commissionController.text = '0';
+                                            }
+                                          }
                                         });
                                       },
                                     ),
@@ -326,7 +365,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 foregroundColor: AppColors.primaryEmerald,
                                 padding: const EdgeInsets.all(AppSpacing.md),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.md),
                                   side: const BorderSide(
                                     color: AppColors.primaryEmerald,
                                   ),
@@ -337,9 +377,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: AppSpacing.lg),
-                    
+
                     // Customer List
                     if (_customerEntries.isNotEmpty) ...[
                       Text('Customer List', style: AppTypography.titleMedium),
@@ -398,7 +438,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ),
               ),
             ),
-            
+
             // Submit Button
             Container(
               padding: const EdgeInsets.all(AppSpacing.screenHorizontal),
@@ -413,12 +453,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 ],
               ),
               child: CustomButton(
-                text: _customerEntries.isEmpty 
+                text: _customerEntries.isEmpty
                     ? 'Add Customers First'
                     : 'Submit ${_customerEntries.length} Transaction(s)',
-                onPressed: _customerEntries.isEmpty 
-                    ? () {} 
-                    : _submitAllTransactions,
+                onPressed:
+                    _customerEntries.isEmpty ? () {} : _submitAllTransactions,
               ),
             ),
           ],

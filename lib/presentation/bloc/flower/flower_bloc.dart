@@ -39,7 +39,10 @@ class FlowerBloc extends Bloc<FlowerEvent, FlowerState> {
     Emitter<FlowerState> emit,
   ) async {
     emit(FlowerLoading());
-    final result = await addFlower(event.name);
+    final result = await addFlower(AddFlowerParams(
+      name: event.name,
+      defaultRate: event.defaultRate,
+    ));
 
     await result.fold(
       (failure) async => emit(FlowerError(failure.message)),

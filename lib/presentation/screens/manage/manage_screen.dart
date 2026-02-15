@@ -3,6 +3,7 @@ import '../../../core/utils/constants.dart';
 import '../../../core/utils/typography.dart';
 import 'customer_list_view.dart';
 import 'flower_list_view.dart';
+import '../settings/settings_screen.dart';
 
 class ManageScreen extends StatefulWidget {
   const ManageScreen({super.key});
@@ -38,9 +39,28 @@ class _ManageScreenState extends State<ManageScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Manage',
-                  style: AppTypography.headlineLarge,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Manage',
+                      style: AppTypography.headlineLarge,
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.settings,
+                        color: AppColors.primaryEmerald,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(

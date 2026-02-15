@@ -8,8 +8,10 @@ import 'presentation/bloc/customer/customer_bloc.dart';
 import 'presentation/bloc/dashboard/dashboard_bloc.dart';
 import 'presentation/bloc/flower/flower_bloc.dart';
 import 'presentation/bloc/transaction/transaction_bloc.dart';
+import 'presentation/bloc/settings/settings_bloc.dart';
 import 'presentation/screens/shell_screen.dart';
 import 'data/datasources/neon_database.dart';
+import 'core/database/database_migrator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,9 @@ void main() async {
     password: 'npg_Y4z9uBKCjdyg',
   );
 
+  // Run database migrations
+  await DatabaseMigrator(sl<NeonDatabase>()).migrate();
+
   runApp(const MyApp());
 }
 
@@ -42,6 +47,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => sl<CustomerBloc>()),
         BlocProvider(create: (_) => sl<FlowerBloc>()),
         BlocProvider(create: (_) => sl<BillBloc>()),
+        BlocProvider(create: (_) => sl<SettingsBloc>()),
       ],
       child: MaterialApp(
         title: 'Flower Market Manager',

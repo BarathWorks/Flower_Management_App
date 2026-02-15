@@ -7,11 +7,13 @@ class AddCustomerParams {
   final String name;
   final String? phone;
   final String? address;
+  final double? defaultCommission;
 
   AddCustomerParams({
     required this.name,
     this.phone,
     this.address,
+    this.defaultCommission,
   });
 }
 
@@ -26,6 +28,7 @@ class AddCustomer implements UseCase<void, AddCustomerParams> {
       name: params.name,
       phone: params.phone,
       address: params.address,
+      defaultCommission: params.defaultCommission,
     );
   }
 }

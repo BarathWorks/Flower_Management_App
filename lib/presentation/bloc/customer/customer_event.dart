@@ -13,15 +13,17 @@ class AddCustomerEvent extends CustomerEvent {
   final String name;
   final String? phone;
   final String? address;
+  final double? defaultCommission;
 
   const AddCustomerEvent({
     required this.name,
     this.phone,
     this.address,
+    this.defaultCommission,
   });
 
   @override
-  List<Object?> get props => [name, phone, address];
+  List<Object?> get props => [name, phone, address, defaultCommission];
 }
 
 class UpdateCustomerEvent extends CustomerEvent {
@@ -29,16 +31,18 @@ class UpdateCustomerEvent extends CustomerEvent {
   final String name;
   final String? phone;
   final String? address;
+  final double? defaultCommission;
 
   const UpdateCustomerEvent({
     required this.id,
     required this.name,
     this.phone,
     this.address,
+    this.defaultCommission,
   });
 
   @override
-  List<Object?> get props => [id, name, phone, address];
+  List<Object?> get props => [id, name, phone, address, defaultCommission];
 }
 
 class DeleteCustomerEvent extends CustomerEvent {
