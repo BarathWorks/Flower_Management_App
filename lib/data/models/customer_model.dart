@@ -8,6 +8,7 @@ class CustomerModel extends Customer {
     super.address,
     super.defaultCommission,
     required super.createdAt,
+    super.flowerIds,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +21,9 @@ class CustomerModel extends Customer {
           ? (json['default_commission'] as num).toDouble()
           : null,
       createdAt: DateTime.parse(json['created_at'] as String),
+      flowerIds: json['flower_ids'] != null
+          ? List<String>.from(json['flower_ids'])
+          : [],
     );
   }
 
@@ -31,6 +35,7 @@ class CustomerModel extends Customer {
       'address': address,
       'default_commission': defaultCommission,
       'created_at': createdAt.toIso8601String(),
+      'flower_ids': flowerIds,
     };
   }
 }

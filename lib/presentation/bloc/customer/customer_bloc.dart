@@ -48,8 +48,8 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       phone: event.phone,
       address: event.address,
       defaultCommission: event.defaultCommission,
+      flowerIds: event.flowerIds,
     ));
-
     await result.fold(
       (failure) async => emit(CustomerError(failure.message)),
       (_) async {
@@ -70,6 +70,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       phone: event.phone,
       address: event.address,
       defaultCommission: event.defaultCommission,
+      flowerIds: event.flowerIds,
     ));
 
     await result.fold(

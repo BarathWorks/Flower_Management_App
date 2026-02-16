@@ -29,6 +29,15 @@ class DatabaseMigrator {
       );
       _logger.i('Created settings table');
 
+      // Create customer_flowers table for many-to-many relationship
+      await database.connection.execute(
+        'CREATE TABLE IF NOT EXISTS customer_flowers ('
+        'customer_id UUID REFERENCES customers(id) ON DELETE CASCADE, '
+        'flower_id UUID REFERENCES flowers(id) ON DELETE CASCADE, '
+        'PRIMARY KEY (customer_id, flower_id))',
+      );
+      _logger.i('Created customer_flowers table');
+
       _logger.i('Database migration completed successfully');
     } catch (e) {
       _logger.e('Database migration failed: $e');

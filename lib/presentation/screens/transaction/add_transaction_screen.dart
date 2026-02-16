@@ -205,6 +205,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                     _selectedFlowerId = value;
                                     final selectedFlower = state.flowers
                                         .firstWhere((f) => f.id == value);
+                                    _selectedCustomerId = null;
                                     if (selectedFlower.defaultRate != null) {
                                       _rateController.text =
                                           selectedFlower.defaultRate.toString();
@@ -264,7 +265,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                           style: AppTypography.bodyMedium),
                                       dropdownColor: AppColors.surfaceDark,
                                       style: AppTypography.bodyMedium,
-                                      items: state.customers.map((customer) {
+                                      items: state.customers.where((customer) {
+                                        if (_selectedFlowerId == null)
+                                          return true;
+                                        return customer.flowerIds.isEmpty ||
+                                            customer.flowerIds
+                                                .contains(_selectedFlowerId);
+                                      }).map((customer) {
                                         return DropdownMenuItem(
                                           value: customer.id,
                                           child: Text(customer.name),

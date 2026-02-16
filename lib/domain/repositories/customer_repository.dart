@@ -14,6 +14,7 @@ abstract class CustomerRepository {
     String? phone,
     String? address,
     double? defaultCommission,
+    List<String> flowerIds,
   });
   Future<Either<Failure, void>> updateCustomer({
     required String id,
@@ -21,6 +22,7 @@ abstract class CustomerRepository {
     String? phone,
     String? address,
     double? defaultCommission,
+    List<String> flowerIds,
   });
   Future<Either<Failure, void>> deleteCustomer(String id);
 }

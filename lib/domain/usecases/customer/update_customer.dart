@@ -9,6 +9,7 @@ class UpdateCustomerParams {
   final String? phone;
   final String? address;
   final double? defaultCommission;
+  final List<String> flowerIds;
 
   UpdateCustomerParams({
     required this.id,
@@ -16,6 +17,7 @@ class UpdateCustomerParams {
     this.phone,
     this.address,
     this.defaultCommission,
+    this.flowerIds = const [],
   });
 }
 
@@ -32,6 +34,7 @@ class UpdateCustomer implements UseCase<void, UpdateCustomerParams> {
       phone: params.phone,
       address: params.address,
       defaultCommission: params.defaultCommission,
+      flowerIds: params.flowerIds,
     );
   }
 }

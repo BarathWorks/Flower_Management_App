@@ -5,6 +5,9 @@ import '../../../core/utils/typography.dart';
 import '../../bloc/customer/customer_bloc.dart';
 import '../../bloc/customer/customer_event.dart';
 import '../../bloc/customer/customer_state.dart';
+import '../../bloc/flower/flower_bloc.dart';
+import '../../bloc/flower/flower_event.dart';
+import '../../bloc/flower/flower_state.dart';
 
 class CustomerListView extends StatefulWidget {
   const CustomerListView({super.key});
@@ -18,6 +21,7 @@ class _CustomerListViewState extends State<CustomerListView> {
   void initState() {
     super.initState();
     context.read<CustomerBloc>().add(LoadCustomers());
+    context.read<FlowerBloc>().add(LoadFlowers());
   }
 
   @override
@@ -103,6 +107,13 @@ class _CustomerListViewState extends State<CustomerListView> {
                           ),
                           IconButton(
                             onPressed: () {
+                              _showEditDialog(context, customer);
+                            },
+                            icon: const Icon(Icons.edit_rounded),
+                            color: AppColors.primaryEmerald,
+                          ),
+                          IconButton(
+                            onPressed: () {
                               _showDeleteDialog(
                                   context, customer.id, customer.name);
                             },
@@ -138,88 +149,289 @@ class _CustomerListViewState extends State<CustomerListView> {
     final phoneController = TextEditingController();
     final addressController = TextEditingController();
     final commissionController = TextEditingController();
+    List<String> selectedFlowerIds = [];
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
-        title: Text('Add Customer', style: AppTypography.headlineSmall),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                style: AppTypography.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Name',
-                  hintStyle: AppTypography.bodyMedium
-                      .copyWith(color: AppColors.textTertiary),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Text('Add Customer', style: AppTypography.headlineSmall),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Name',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: phoneController,
-                style: AppTypography.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Phone (optional)',
-                  hintStyle: AppTypography.bodyMedium
-                      .copyWith(color: AppColors.textTertiary),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: phoneController,
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Phone (optional)',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: addressController,
-                style: AppTypography.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Address (optional)',
-                  hintStyle: AppTypography.bodyMedium
-                      .copyWith(color: AppColors.textTertiary),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: addressController,
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Address (optional)',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                controller: commissionController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                style: AppTypography.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Default Commission % (Optional)',
-                  hintStyle: AppTypography.bodyMedium
-                      .copyWith(color: AppColors.textTertiary),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: commissionController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Default Commission % (Optional)',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.md),
+                Text('Associated Flowers',
+                    style: AppTypography.titleMedium.copyWith(fontSize: 14)),
+                const SizedBox(height: AppSpacing.sm),
+                BlocBuilder<FlowerBloc, FlowerState>(
+                  builder: (context, state) {
+                    if (state is FlowerLoaded) {
+                      if (state.flowers.isEmpty) {
+                        return Text(
+                          'No flowers available. Add flowers first.',
+                          style: AppTypography.bodySmall
+                              .copyWith(color: AppColors.textTertiary),
+                        );
+                      }
+                      return Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        children: state.flowers.map((flower) {
+                          final isSelected =
+                              selectedFlowerIds.contains(flower.id);
+                          return FilterChip(
+                            label: Text(flower.name),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  selectedFlowerIds.add(flower.id);
+                                } else {
+                                  selectedFlowerIds.remove(flower.id);
+                                }
+                              });
+                            },
+                            backgroundColor:
+                                AppColors.surfaceDark.withOpacity(0.5),
+                            selectedColor:
+                                AppColors.primaryEmerald.withOpacity(0.2),
+                            checkmarkColor: AppColors.primaryEmerald,
+                            labelStyle: AppTypography.bodySmall.copyWith(
+                              color: isSelected
+                                  ? AppColors.primaryEmerald
+                                  : AppColors.textSecondary,
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('Cancel', style: AppTypography.labelLarge),
+            ),
+            TextButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty) {
+                  context.read<CustomerBloc>().add(AddCustomerEvent(
+                        name: nameController.text,
+                        phone: phoneController.text.isEmpty
+                            ? null
+                            : phoneController.text,
+                        address: addressController.text.isEmpty
+                            ? null
+                            : addressController.text,
+                        defaultCommission:
+                            double.tryParse(commissionController.text),
+                        flowerIds: selectedFlowerIds,
+                      ));
+                  Navigator.pop(dialogContext);
+                }
+              },
+              child: Text('Add',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.primaryEmerald,
+                  )),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancel', style: AppTypography.labelLarge),
+      ),
+    );
+  }
+
+  void _showEditDialog(BuildContext context, dynamic customer) {
+    final nameController = TextEditingController(text: customer.name);
+    final phoneController = TextEditingController(text: customer.phone);
+    final addressController = TextEditingController(text: customer.address);
+    final commissionController = TextEditingController(
+        text: customer.defaultCommission?.toString() ?? '');
+    List<String> selectedFlowerIds = List.from(customer.flowerIds);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Text('Edit Customer', style: AppTypography.headlineSmall),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: nameController,
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Name',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: phoneController,
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Phone (optional)',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: addressController,
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Address (optional)',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextField(
+                  controller: commissionController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Default Commission % (Optional)',
+                    hintStyle: AppTypography.bodyMedium
+                        .copyWith(color: AppColors.textTertiary),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text('Associated Flowers',
+                    style: AppTypography.titleMedium.copyWith(fontSize: 14)),
+                const SizedBox(height: AppSpacing.sm),
+                BlocBuilder<FlowerBloc, FlowerState>(
+                  builder: (context, state) {
+                    if (state is FlowerLoaded) {
+                      if (state.flowers.isEmpty) {
+                        return Text(
+                          'No flowers available. Add flowers first.',
+                          style: AppTypography.bodySmall
+                              .copyWith(color: AppColors.textTertiary),
+                        );
+                      }
+                      return Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        children: state.flowers.map((flower) {
+                          final isSelected =
+                              selectedFlowerIds.contains(flower.id);
+                          return FilterChip(
+                            label: Text(flower.name),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                if (selected) {
+                                  selectedFlowerIds.add(flower.id);
+                                } else {
+                                  selectedFlowerIds.remove(flower.id);
+                                }
+                              });
+                            },
+                            backgroundColor:
+                                AppColors.surfaceDark.withOpacity(0.5),
+                            selectedColor:
+                                AppColors.primaryEmerald.withOpacity(0.2),
+                            checkmarkColor: AppColors.primaryEmerald,
+                            labelStyle: AppTypography.bodySmall.copyWith(
+                              color: isSelected
+                                  ? AppColors.primaryEmerald
+                                  : AppColors.textSecondary,
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                context.read<CustomerBloc>().add(AddCustomerEvent(
-                      name: nameController.text,
-                      phone: phoneController.text.isEmpty
-                          ? null
-                          : phoneController.text,
-                      address: addressController.text.isEmpty
-                          ? null
-                          : addressController.text,
-                      defaultCommission:
-                          double.tryParse(commissionController.text),
-                    ));
-                Navigator.pop(dialogContext);
-              }
-            },
-            child: Text('Add',
-                style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.primaryEmerald,
-                )),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('Cancel', style: AppTypography.labelLarge),
+            ),
+            TextButton(
+              onPressed: () {
+                if (nameController.text.isNotEmpty) {
+                  context.read<CustomerBloc>().add(UpdateCustomerEvent(
+                        id: customer.id,
+                        name: nameController.text,
+                        phone: phoneController.text.isEmpty
+                            ? null
+                            : phoneController.text,
+                        address: addressController.text.isEmpty
+                            ? null
+                            : addressController.text,
+                        defaultCommission:
+                            double.tryParse(commissionController.text),
+                        flowerIds: selectedFlowerIds,
+                      ));
+                  Navigator.pop(dialogContext);
+                }
+              },
+              child: Text('Save',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.primaryEmerald,
+                  )),
+            ),
+          ],
+        ),
       ),
     );
   }
