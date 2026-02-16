@@ -14,6 +14,7 @@ class TransactionModel extends Transaction {
     required super.rate,
     required super.amount,
     required super.commission,
+    required super.advance,
     required super.netAmount,
     required super.createdAt,
   });
@@ -31,6 +32,7 @@ class TransactionModel extends Transaction {
       rate: TypeConverters.toDouble(json['rate']),
       amount: TypeConverters.toDouble(json['amount']),
       commission: TypeConverters.toDouble(json['commission']),
+      advance: TypeConverters.toDouble(json['advance']),
       netAmount: TypeConverters.toDouble(json['net_amount']),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -49,6 +51,7 @@ class TransactionModel extends Transaction {
       'rate': rate,
       'amount': amount,
       'commission': commission,
+      'advance': advance,
       'net_amount': netAmount,
       'created_at': createdAt.toIso8601String(),
     };

@@ -8,6 +8,7 @@ class CustomerTransactionDetail extends Equatable {
   final double rate;
   final double amount;
   final double commission;
+  final double advance;
   final double netAmount;
   final DateTime createdAt;
 
@@ -19,6 +20,7 @@ class CustomerTransactionDetail extends Equatable {
     required this.rate,
     required this.amount,
     required this.commission,
+    required this.advance,
     required this.netAmount,
     required this.createdAt,
   });
@@ -32,6 +34,7 @@ class CustomerTransactionDetail extends Equatable {
         rate,
         amount,
         commission,
+        advance,
         netAmount,
         createdAt,
       ];

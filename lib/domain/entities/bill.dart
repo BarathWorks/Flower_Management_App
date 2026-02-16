@@ -47,6 +47,7 @@ class Bill extends Equatable {
   final double totalQuantity;
   final double totalAmount;
   final double totalCommission;
+  final double totalAdvance;
   final double totalExpense;
   final double netAmount;
   final String status;
@@ -63,6 +64,7 @@ class Bill extends Equatable {
     required this.totalQuantity,
     required this.totalAmount,
     required this.totalCommission,
+    required this.totalAdvance,
     required this.totalExpense,
     required this.netAmount,
     required this.status,
@@ -81,6 +83,7 @@ class Bill extends Equatable {
         totalQuantity,
         totalAmount,
         totalCommission,
+        totalAdvance,
         totalExpense,
         netAmount,
         status,

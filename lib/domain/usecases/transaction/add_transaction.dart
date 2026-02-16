@@ -8,12 +8,14 @@ class CustomerTransactionData {
   final double quantity;
   final double rate;
   final double commission;
+  final double advance;
 
   CustomerTransactionData({
     required this.customerId,
     required this.quantity,
     required this.rate,
     required this.commission,
+    this.advance = 0,
   });
 }
 

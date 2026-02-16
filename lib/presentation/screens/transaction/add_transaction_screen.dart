@@ -25,6 +25,7 @@ class CustomerTransactionEntry {
   final double quantity;
   final double rate;
   final double commission;
+  final double advance;
 
   CustomerTransactionEntry({
     required this.customerId,
@@ -32,10 +33,11 @@ class CustomerTransactionEntry {
     required this.quantity,
     required this.rate,
     required this.commission,
+    this.advance = 0,
   });
 
   double get amount => quantity * rate;
-  double get netAmount => amount - commission;
+  double get netAmount => amount - commission - advance;
 }
 
 class AddTransactionScreen extends StatefulWidget {
@@ -50,6 +52,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _quantityController = TextEditingController();
   final _rateController = TextEditingController();
   final _commissionController = TextEditingController();
+  final _advanceController = TextEditingController();
 
   String? _selectedFlowerId;
   String? _selectedCustomerId;
@@ -71,6 +74,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     _quantityController.dispose();
     _rateController.dispose();
     _commissionController.dispose();
+    _advanceController.dispose();
     super.dispose();
   }
 
@@ -87,6 +91,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           quantity: double.parse(_quantityController.text),
           rate: double.parse(_rateController.text),
           commission: double.parse(_commissionController.text),
+          advance: double.parse(
+              _advanceController.text.isEmpty ? '0' : _advanceController.text),
         ));
 
         // Clear form
@@ -94,6 +100,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         _quantityController.clear();
         _rateController.clear();
         _commissionController.clear();
+        _advanceController.clear();
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -138,6 +145,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               quantity: entry.quantity,
               rate: entry.rate,
               commission: entry.commission,
+              advance: entry.advance,
             ))
         .toList();
 
@@ -361,6 +369,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             },
                           ),
                           const SizedBox(height: AppSpacing.md),
+                          CustomTextField(
+                            label: 'Advance',
+                            controller: _advanceController,
+                            keyboardType: TextInputType.number,
+                            hint: '0.00',
+                          ),
+                          const SizedBox(height: AppSpacing.md),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
@@ -422,7 +437,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                       style: AppTypography.bodySmall,
                                     ),
                                     Text(
-                                      'Commission: ₹${customer.commission.toStringAsFixed(2)} | Net: ₹${customer.netAmount.toStringAsFixed(2)}',
+                                      'Comm: ₹${customer.commission.toStringAsFixed(2)} | Adv: ₹${customer.advance.toStringAsFixed(2)} | Net: ₹${customer.netAmount.toStringAsFixed(2)}',
                                       style: AppTypography.bodySmall.copyWith(
                                         color: AppColors.textSecondary,
                                       ),

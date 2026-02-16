@@ -10,12 +10,13 @@ abstract class TransactionRemoteDataSource {
   // Legacy methods
   Future<List<TransactionModel>> getTodayTransactions();
   Future<List<TransactionModel>> getTransactionsByDate(DateTime date);
-  
+
   // New methods for daily flower entries
   Future<List<DailyFlowerEntryModel>> getTodayDailyEntries();
   Future<List<DailyFlowerEntryModel>> getDailyEntriesByDate(DateTime date);
-  Future<List<CustomerTransactionDetailModel>> getCustomerDetailsForEntry(String dailyEntryId);
-  
+  Future<List<CustomerTransactionDetailModel>> getCustomerDetailsForEntry(
+      String dailyEntryId);
+
   Future<void> addTransaction({
     required String flowerId,
     required String customerId,
@@ -23,6 +24,7 @@ abstract class TransactionRemoteDataSource {
     required double quantity,
     required double rate,
     required double commission,
+    double advance = 0,
   });
   Future<void> addMultipleCustomerTransactions({
     required String flowerId,
@@ -59,6 +61,7 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
           dfc.rate,
           dfc.amount,
           dfc.commission,
+          dfc.advance,
           dfc.net_amount,
           dfc.created_at
         FROM daily_flower_customer dfc
@@ -84,8 +87,9 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
           rate: TypeConverters.toDouble(row[8]),
           amount: TypeConverters.toDouble(row[9]),
           commission: TypeConverters.toDouble(row[10]),
-          netAmount: TypeConverters.toDouble(row[11]),
-          createdAt: row[12] as DateTime,
+          advance: TypeConverters.toDouble(row[11]),
+          netAmount: TypeConverters.toDouble(row[12]),
+          createdAt: row[13] as DateTime,
         );
       }).toList();
     } catch (e) {
@@ -101,10 +105,11 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
     required double quantity,
     required double rate,
     required double commission,
+    double advance = 0,
   }) async {
     try {
       final amount = quantity * rate;
-      final netAmount = amount - commission;
+      final netAmount = amount - commission - advance;
       final dateStr = entryDate.toIso8601String().split('T')[0];
 
       // First, get or create daily_flower_entry
@@ -125,8 +130,8 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
       await database.connection.execute(
         '''
         INSERT INTO daily_flower_customer 
-        (daily_entry_id, customer_id, quantity, rate, amount, commission, net_amount)
-        VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7)
+        (daily_entry_id, customer_id, quantity, rate, amount, commission, advance, net_amount)
+        VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8)
         ''',
         parameters: [
           dailyEntryId,
@@ -135,6 +140,7 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
           rate,
           amount,
           commission,
+          advance,
           netAmount
         ],
       );
@@ -169,13 +175,13 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
       // Then, insert all customer transactions
       for (final customer in customers) {
         final amount = customer.quantity * customer.rate;
-        final netAmount = amount - customer.commission;
+        final netAmount = amount - customer.commission - customer.advance;
 
         await database.connection.execute(
           '''
           INSERT INTO daily_flower_customer 
-          (daily_entry_id, customer_id, quantity, rate, amount, commission, net_amount)
-          VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7)
+          (daily_entry_id, customer_id, quantity, rate, amount, commission, advance, net_amount)
+          VALUES (\$1, \$2, \$3, \$4, \$5, \$6, \$7, \$8)
           ''',
           parameters: [
             dailyEntryId,
@@ -184,12 +190,14 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
             customer.rate,
             amount,
             customer.commission,
+            customer.advance,
             netAmount
           ],
         );
       }
     } catch (e) {
-      throw DatabaseException('Failed to add multiple customer transactions: $e');
+      throw DatabaseException(
+          'Failed to add multiple customer transactions: $e');
     }
   }
 
@@ -211,7 +219,8 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
   }
 
   @override
-  Future<List<DailyFlowerEntryModel>> getDailyEntriesByDate(DateTime date) async {
+  Future<List<DailyFlowerEntryModel>> getDailyEntriesByDate(
+      DateTime date) async {
     try {
       final result = await database.connection.execute(
         '''
@@ -234,7 +243,9 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
         parameters: [date.toIso8601String().split('T')[0]],
       );
 
-      return result.map((row) => DailyFlowerEntryModel.fromDatabase(row)).toList();
+      return result
+          .map((row) => DailyFlowerEntryModel.fromDatabase(row))
+          .toList();
     } catch (e) {
       throw DatabaseException('Failed to get daily entries: $e');
     }
@@ -254,6 +265,7 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
           dfc.rate,
           dfc.amount,
           dfc.commission,
+          dfc.advance,
           dfc.net_amount,
           dfc.created_at
         FROM daily_flower_customer dfc
@@ -264,7 +276,20 @@ class TransactionRemoteDataSourceImpl implements TransactionRemoteDataSource {
         parameters: [dailyEntryId],
       );
 
-      return result.map((row) => CustomerTransactionDetailModel.fromDatabase(row)).toList();
+      return result.map((row) {
+        return CustomerTransactionDetailModel(
+          id: row[0] as String,
+          customerId: row[1] as String,
+          customerName: row[2] as String,
+          quantity: TypeConverters.toDouble(row[3]),
+          rate: TypeConverters.toDouble(row[4]),
+          amount: TypeConverters.toDouble(row[5]),
+          commission: TypeConverters.toDouble(row[6]),
+          advance: TypeConverters.toDouble(row[7]),
+          netAmount: TypeConverters.toDouble(row[8]),
+          createdAt: row[9] as DateTime,
+        );
+      }).toList();
     } catch (e) {
       throw DatabaseException('Failed to get customer details: $e');
     }

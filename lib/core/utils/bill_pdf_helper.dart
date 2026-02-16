@@ -176,6 +176,13 @@ class BillPdfHelper {
                               '- ${bill.totalCommission.toStringAsFixed(0)}'),
                         ],
                       ),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text(isTamilFontLoaded ? 'முன்பணம்:' : 'Advance:'),
+                          pw.Text('- ${bill.totalAdvance.toStringAsFixed(0)}'),
+                        ],
+                      ),
                       pw.Divider(thickness: 2),
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,

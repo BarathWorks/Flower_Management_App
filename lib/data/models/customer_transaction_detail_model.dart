@@ -10,6 +10,7 @@ class CustomerTransactionDetailModel extends CustomerTransactionDetail {
     required super.rate,
     required super.amount,
     required super.commission,
+    required super.advance,
     required super.netAmount,
     required super.createdAt,
   });
@@ -23,8 +24,9 @@ class CustomerTransactionDetailModel extends CustomerTransactionDetail {
       rate: TypeConverters.toDouble(row[4]),
       amount: TypeConverters.toDouble(row[5]),
       commission: TypeConverters.toDouble(row[6]),
-      netAmount: TypeConverters.toDouble(row[7]),
-      createdAt: row[8] as DateTime,
+      advance: TypeConverters.toDouble(row[7]),
+      netAmount: TypeConverters.toDouble(row[8]),
+      createdAt: row[9] as DateTime,
     );
   }
 }

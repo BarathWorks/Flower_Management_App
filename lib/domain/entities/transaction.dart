@@ -12,6 +12,7 @@ class Transaction extends Equatable {
   final double rate;
   final double amount;
   final double commission;
+  final double advance;
   final double netAmount;
   final DateTime createdAt;
 
@@ -27,6 +28,7 @@ class Transaction extends Equatable {
     required this.rate,
     required this.amount,
     required this.commission,
+    required this.advance,
     required this.netAmount,
     required this.createdAt,
   });
@@ -44,6 +46,7 @@ class Transaction extends Equatable {
         rate,
         amount,
         commission,
+        advance,
         netAmount,
         createdAt,
       ];
