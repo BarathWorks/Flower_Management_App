@@ -47,3 +47,12 @@ class BillOperationSuccess extends BillState {
   @override
   List<Object> get props => [message];
 }
+
+class LastBillDateLoaded extends BillState {
+  final DateTime? date;
+
+  const LastBillDateLoaded(this.date);
+
+  @override
+  List<Object> get props => [date ?? DateTime(0)];
+}

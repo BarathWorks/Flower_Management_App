@@ -11,18 +11,30 @@ class BillRepositoryImpl implements BillRepository {
   BillRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, String>> generateMonthlyBill({
+  Future<Either<Failure, String>> generateBill({
     required String customerId,
-    required int year,
-    required int month,
+    required DateTime startDate,
+    required DateTime endDate,
   }) async {
     try {
-      final billId = await remoteDataSource.generateMonthlyBill(
+      final billId = await remoteDataSource.generateBill(
         customerId: customerId,
-        year: year,
-        month: month,
+        startDate: startDate,
+        endDate: endDate,
       );
       return Right(billId);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, DateTime?>> getLastBillDate(String customerId) async {
+    try {
+      final date = await remoteDataSource.getLastBillDate(customerId);
+      return Right(date);
     } on DatabaseException catch (e) {
       return Left(DatabaseFailure(e.message));
     } catch (e) {
@@ -71,6 +83,41 @@ class BillRepositoryImpl implements BillRepository {
   Future<Either<Failure, void>> deleteBill(String billId) async {
     try {
       await remoteDataSource.deleteBill(billId);
+      return const Right(null);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateBillStatus(
+      String billId, String status) async {
+    try {
+      await remoteDataSource.updateBillStatus(billId, status);
+      return const Right(null);
+    } on DatabaseException catch (e) {
+      return Left(DatabaseFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> addPayment({
+    required String billId,
+    required double amount,
+    required DateTime date,
+    String? notes,
+  }) async {
+    try {
+      await remoteDataSource.addPayment(
+        billId: billId,
+        amount: amount,
+        date: date,
+        notes: notes,
+      );
       return const Right(null);
     } on DatabaseException catch (e) {
       return Left(DatabaseFailure(e.message));

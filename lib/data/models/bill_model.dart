@@ -1,5 +1,6 @@
 import '../../core/utils/type_converters.dart';
 import '../../domain/entities/bill.dart';
+import 'payment_model.dart';
 
 class BillItemModel extends BillItem {
   const BillItemModel({
@@ -37,15 +38,19 @@ class BillModel extends Bill {
     required super.customerName,
     required super.billYear,
     required super.billMonth,
+    super.startDate,
+    super.endDate,
     required super.totalQuantity,
     required super.totalAmount,
     required super.totalCommission,
     required super.totalAdvance,
     required super.totalExpense,
     required super.netAmount,
+    super.paidAmount,
     required super.status,
     required super.generatedAt,
-    required super.items,
+    super.items,
+    super.payments,
   });
 
   factory BillModel.fromJson(Map<String, dynamic> json) {
@@ -56,6 +61,13 @@ class BillModel extends Bill {
             .toList() ??
         [];
 
+    final paymentsList = json['payments'] as List<dynamic>?;
+    final payments = paymentsList
+            ?.map((payment) =>
+                PaymentModel.fromJson(payment as Map<String, dynamic>))
+            .toList() ??
+        [];
+
     return BillModel(
       id: json['id'] as String,
       billNumber: json['bill_number'] as String,
@@ -63,15 +75,23 @@ class BillModel extends Bill {
       customerName: json['customer_name'] as String,
       billYear: json['bill_year'] as int,
       billMonth: json['bill_month'] as int,
+      startDate: json['start_date'] != null
+          ? DateTime.parse(json['start_date'] as String)
+          : null,
+      endDate: json['end_date'] != null
+          ? DateTime.parse(json['end_date'] as String)
+          : null,
       totalQuantity: TypeConverters.toDouble(json['total_quantity']),
       totalAmount: TypeConverters.toDouble(json['total_amount']),
       totalCommission: TypeConverters.toDouble(json['total_commission']),
       totalAdvance: TypeConverters.toDouble(json['total_advance']),
       totalExpense: TypeConverters.toDouble(json['total_expense']),
       netAmount: TypeConverters.toDouble(json['net_amount']),
+      paidAmount: TypeConverters.toDouble(json['paid_amount'] ?? 0),
       status: json['status'] as String,
       generatedAt: DateTime.parse(json['generated_at'] as String),
       items: items,
+      payments: payments,
     );
   }
 }

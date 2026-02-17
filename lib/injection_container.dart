@@ -15,10 +15,13 @@ import 'domain/repositories/customer_repository.dart';
 import 'domain/repositories/dashboard_repository.dart';
 import 'domain/repositories/flower_repository.dart';
 import 'domain/repositories/transaction_repository.dart';
-import 'domain/usecases/bill/generate_monthly_bill.dart';
+import 'domain/usecases/bill/generate_bill.dart';
+import 'domain/usecases/bill/get_last_bill_date.dart';
 import 'domain/usecases/bill/delete_bill.dart';
 import 'domain/usecases/bill/get_all_bills.dart';
 import 'domain/usecases/bill/get_bill_details.dart';
+import 'domain/usecases/bill/update_bill_status.dart';
+import 'domain/usecases/bill/add_payment.dart';
 import 'domain/usecases/customer/add_customer.dart';
 import 'domain/usecases/customer/delete_customer.dart';
 import 'domain/usecases/customer/get_all_customers.dart';
@@ -163,16 +166,22 @@ Future<void> init() async {
     () => BillBloc(
       getAllBills: sl(),
       getBillDetails: sl(),
-      generateMonthlyBill: sl(),
+      generateBill: sl(),
+      getLastBillDate: sl(),
       deleteBill: sl(),
+      updateBillStatus: sl(),
+      addPayment: sl(),
     ),
   );
 
   // Use cases
   sl.registerLazySingleton(() => GetAllBills(sl()));
   sl.registerLazySingleton(() => GetBillDetails(sl()));
-  sl.registerLazySingleton(() => GenerateMonthlyBill(sl()));
+  sl.registerLazySingleton(() => GenerateBill(sl()));
+  sl.registerLazySingleton(() => GetLastBillDate(sl()));
   sl.registerLazySingleton(() => DeleteBill(sl()));
+  sl.registerLazySingleton(() => UpdateBillStatus(sl()));
+  sl.registerLazySingleton(() => AddPayment(sl()));
 
   // Repository
   sl.registerLazySingleton<BillRepository>(

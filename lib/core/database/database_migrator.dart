@@ -51,11 +51,52 @@ class DatabaseMigrator {
       _logger.i('Added total_advance to bills table');
 
       // Create or replace generate_monthly_bill calculation function
+      // NOTE: We are keeping the old function for backward compatibility if needed,
+      // but creating a new one for date ranges.
+
+      // Add start_date and end_date columns to bills
+      await database.connection.execute(
+        'ALTER TABLE bills ADD COLUMN IF NOT EXISTS start_date DATE',
+      );
+      await database.connection.execute(
+        'ALTER TABLE bills ADD COLUMN IF NOT EXISTS end_date DATE',
+      );
+      await database.connection.execute(
+        'ALTER TABLE bills ADD COLUMN IF NOT EXISTS end_date DATE',
+      );
+      _logger.i('Added start_date and end_date to bills table');
+
+      // Add paid_amount to bills
+      await database.connection.execute(
+        'ALTER TABLE bills ADD COLUMN IF NOT EXISTS paid_amount DOUBLE PRECISION DEFAULT 0',
+      );
+      _logger.i('Added paid_amount to bills table');
+
+      // Create payments table if it doesn't exist
+      await database.connection.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS payments (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          bill_id UUID REFERENCES bills(id) ON DELETE CASCADE,
+          amount DOUBLE PRECISION NOT NULL,
+          payment_date TIMESTAMP DEFAULT NOW(),
+          notes TEXT
+        )
+        ''',
+      );
+      _logger.i('Ensured payments table exists');
+
+      // Drop unique constraint to allow multiple bills per month
+      await database.connection.execute(
+        'ALTER TABLE bills DROP CONSTRAINT IF EXISTS bills_customer_id_bill_year_bill_month_key',
+      );
+      _logger.i('Dropped unique constraint on bills table');
+
       await database.connection.execute('''
-        CREATE OR REPLACE FUNCTION generate_monthly_bill(
+        CREATE OR REPLACE FUNCTION generate_bill(
           p_customer_id UUID,
-          p_year INTEGER,
-          p_month INTEGER
+          p_start_date DATE,
+          p_end_date DATE
         ) RETURNS UUID AS \$\$
         DECLARE
           v_bill_id UUID;
@@ -65,8 +106,10 @@ class DatabaseMigrator {
           v_total_advance DOUBLE PRECISION;
           v_net_amount DOUBLE PRECISION;
           v_bill_number VARCHAR;
+          v_year INTEGER;
+          v_month INTEGER;
         BEGIN
-          -- Calculate totals from daily_flower_customer
+          -- Calculate totals from daily_flower_customer for the given date range
           SELECT 
             COALESCE(SUM(dfc.quantity), 0),
             COALESCE(SUM(dfc.amount), 0),
@@ -80,28 +123,47 @@ class DatabaseMigrator {
           FROM daily_flower_customer dfc
           JOIN daily_flower_entry dfe ON dfc.daily_entry_id = dfe.id
           WHERE dfc.customer_id = p_customer_id
-            AND EXTRACT(YEAR FROM dfe.entry_date) = p_year
-            AND EXTRACT(MONTH FROM dfe.entry_date) = p_month;
+            AND dfe.entry_date BETWEEN p_start_date AND p_end_date;
 
           -- Calculate net amount (Amount - Commission - Advance)
           v_net_amount := v_total_amount - v_total_commission - v_total_advance;
 
-          -- Generate Bill Number (Format: YYYYMM-CUSTID-RANDOM)
-          v_bill_number := to_char(p_year, 'FM0000') || to_char(p_month, 'FM00') || '-' || substring(p_customer_id::text, 1, 4);
+          -- Use start date for year/month reference
+          v_year := EXTRACT(YEAR FROM p_start_date);
+          v_month := EXTRACT(MONTH FROM p_start_date);
+
+          -- Generate Bill Number (Format: YYYYMMDD-CUSTID-RANDOM)
+          v_bill_number := to_char(p_start_date, 'YYYYMMDD') || '-' || to_char(p_end_date, 'MMDD') || '-' || substring(p_customer_id::text, 1, 4);
 
           -- Create Bill Record
           INSERT INTO bills (
             bill_number, customer_id, bill_year, bill_month,
+            start_date, end_date,
             total_quantity, total_amount, total_commission, total_advance,
             net_amount, status, generated_at
           ) VALUES (
-            v_bill_number, p_customer_id, p_year, p_month,
+            v_bill_number, p_customer_id, v_year, v_month,
+            p_start_date, p_end_date,
             v_total_quantity, v_total_amount, v_total_commission, v_total_advance,
-            v_net_amount, 'GENERATED', NOW()
+            v_net_amount, 'UNPAID', NOW()
           ) RETURNING id INTO v_bill_id;
 
-          -- Link items to bill (if you have a bill_items table, populate it here)
-          -- For now, we assume bill_items are viewable via daily_flower_customer query
+          -- Insert Bill Items
+          INSERT INTO bill_items (
+            bill_id, flower_id, total_quantity, total_amount, total_commission, net_amount
+          )
+          SELECT 
+            v_bill_id,
+            dfe.flower_id,
+            SUM(dfc.quantity),
+            SUM(dfc.amount),
+            SUM(dfc.commission),
+            SUM(dfc.amount) - SUM(dfc.commission)
+          FROM daily_flower_customer dfc
+          JOIN daily_flower_entry dfe ON dfc.daily_entry_id = dfe.id
+          WHERE dfc.customer_id = p_customer_id
+            AND dfe.entry_date BETWEEN p_start_date AND p_end_date
+          GROUP BY dfe.flower_id;
 
           RETURN v_bill_id;
         END;

@@ -32,7 +32,7 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
           
           (SELECT COUNT(*) FROM flowers) as total_flowers,
           
-          (SELECT COALESCE(SUM(net_amount), 0) FROM bills WHERE status = 'PENDING') as pending_payments,
+          (SELECT COALESCE(SUM(net_amount - COALESCE(paid_amount, 0)), 0) FROM bills WHERE net_amount > COALESCE(paid_amount, 0)) as pending_payments,
           
           (SELECT COUNT(*) 
            FROM daily_flower_customer dfc 

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'payment.dart';
 
 class BillItem extends Equatable {
   final String id;
@@ -44,15 +45,19 @@ class Bill extends Equatable {
   final String customerName;
   final int billYear;
   final int billMonth;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final double totalQuantity;
   final double totalAmount;
   final double totalCommission;
   final double totalAdvance;
   final double totalExpense;
   final double netAmount;
-  final String status;
+  final double paidAmount;
   final DateTime generatedAt;
   final List<BillItem> items;
+  final List<Payment> payments;
+  final String _status; // Internal status from DB
 
   const Bill({
     required this.id,
@@ -61,33 +66,48 @@ class Bill extends Equatable {
     required this.customerName,
     required this.billYear,
     required this.billMonth,
+    this.startDate,
+    this.endDate,
     required this.totalQuantity,
     required this.totalAmount,
     required this.totalCommission,
     required this.totalAdvance,
     required this.totalExpense,
     required this.netAmount,
-    required this.status,
+    this.paidAmount = 0,
+    required String status,
     required this.generatedAt,
-    required this.items,
-  });
+    this.items = const [],
+    this.payments = const [],
+  }) : _status = status;
+
+  String get status {
+    if (_status == 'PAID') return 'PAID';
+    if (paidAmount >= netAmount && netAmount > 0) return 'PAID';
+    if (paidAmount > 0 && paidAmount < netAmount) return 'PARTIAL';
+    return 'UNPAID';
+  }
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
         id,
         billNumber,
         customerId,
         customerName,
         billYear,
         billMonth,
+        startDate,
+        endDate,
         totalQuantity,
         totalAmount,
         totalCommission,
         totalAdvance,
         totalExpense,
         netAmount,
-        status,
+        paidAmount,
+        _status,
         generatedAt,
         items,
+        payments,
       ];
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import '../../../core/usecases/usecase.dart';
 import '../../../domain/entities/customer.dart';
-import '../../../domain/usecases/customer/get_customers_without_bills.dart';
+import '../../../domain/usecases/customer/get_all_customers.dart';
 import '../../../injection_container.dart';
 import '../../bloc/bill/bill_bloc.dart';
 import '../../bloc/bill/bill_event.dart';
@@ -15,263 +17,288 @@ class GenerateBillScreen extends StatefulWidget {
 }
 
 class _GenerateBillScreenState extends State<GenerateBillScreen> {
-  final GetCustomersWithoutBills _getCustomersWithoutBills = sl();
-  
-  int _selectedYear = DateTime.now().year;
-  int _selectedMonth = DateTime.now().month;
-  List<Customer> _unbilledCustomers = [];
-  bool _isLoading = false;
-  String? _errorMessage;
+  final GetAllCustomers _getAllCustomers = sl();
+
+  List<Customer> _customers = [];
+  Customer? _selectedCustomer;
+  DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
+  DateTime _endDate = DateTime.now();
+
+  bool _isLoadingCustomers = true;
+  String? _customerError;
+
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadUnbilledCustomers();
+    _loadCustomers();
+    _updateDateControllers();
   }
 
-  Future<void> _loadUnbilledCustomers() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  @override
+  void dispose() {
+    _startDateController.dispose();
+    _endDateController.dispose();
+    super.dispose();
+  }
 
-    final result = await _getCustomersWithoutBills(
-      GetCustomersWithoutBillsParams(
-        year: _selectedYear,
-        month: _selectedMonth,
-      ),
-    );
+  void _updateDateControllers() {
+    _startDateController.text = DateFormat('dd/MM/yyyy').format(_startDate);
+    _endDateController.text = DateFormat('dd/MM/yyyy').format(_endDate);
+  }
 
+  Future<void> _loadCustomers() async {
+    final result = await _getAllCustomers(const NoParams());
     result.fold(
       (failure) {
         setState(() {
-          _isLoading = false;
-          _errorMessage = failure.message;
-          _unbilledCustomers = [];
+          _isLoadingCustomers = false;
+          _customerError = failure.message;
         });
       },
       (customers) {
         setState(() {
-          _isLoading = false;
-          _unbilledCustomers = customers;
+          _isLoadingCustomers = false;
+          _customers = customers;
         });
       },
     );
   }
 
-  void _generateBill(String customerId, String customerName) {
-    context.read<BillBloc>().add(
-      GenerateBillEvent(
-        customerId: customerId,
-        year: _selectedYear,
-        month: _selectedMonth,
-      ),
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isStartDate ? _startDate : _endDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
     );
 
-    // Show confirmation message after generation is triggered
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Generating bill for $customerName...'),
-      ),
-    );
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = picked;
+          // Ensure end date is not before start date
+          if (_endDate.isBefore(_startDate)) {
+            _endDate = _startDate;
+          }
+        } else {
+          _endDate = picked;
+          // Ensure start date is not after end date
+          if (_startDate.isAfter(_endDate)) {
+            _startDate = _endDate;
+          }
+        }
+        _updateDateControllers();
+      });
+    }
+  }
+
+  void _onCustomerSelected(Customer? customer) {
+    setState(() {
+      _selectedCustomer = customer;
+    });
+
+    if (customer != null) {
+      context.read<BillBloc>().add(LoadLastBillDate(customer.id));
+    }
+  }
+
+  void _generateBill() {
+    if (_selectedCustomer == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a customer')),
+      );
+      return;
+    }
+
+    context.read<BillBloc>().add(
+          GenerateBillEvent(
+            customerId: _selectedCustomer!.id,
+            startDate: _startDate,
+            endDate: _endDate,
+          ),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Generate Manual Bill'),
+        title: const Text('Generate Bill'),
         backgroundColor: Colors.green,
       ),
-      body: Column(
-        children: [
-          // Month and Year Selector
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[100],
-            child: Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    value: _selectedMonth,
-                    decoration: const InputDecoration(
-                      labelText: 'Month',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: List.generate(12, (index) {
-                      final month = index + 1;
-                      final monthNames = [
-                        'January', 'February', 'March', 'April', 'May', 'June',
-                        'July', 'August', 'September', 'October', 'November', 'December'
-                      ];
-                      return DropdownMenuItem(
-                        value: month,
-                        child: Text(monthNames[index]),
-                      );
-                    }),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedMonth = value;
-                        });
-                        _loadUnbilledCustomers();
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DropdownButtonFormField<int>(
-                    value: _selectedYear,
-                    decoration: const InputDecoration(
-                      labelText: 'Year',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    items: List.generate(5, (index) {
-                      final year = DateTime.now().year - 2 + index;
-                      return DropdownMenuItem(
-                        value: year,
-                        child: Text(year.toString()),
-                      );
-                    }),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _selectedYear = value;
-                        });
-                        _loadUnbilledCustomers();
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Customer List
-          Expanded(
-            child: BlocListener<BillBloc, BillState>(
-              listener: (context, state) {
-                if (state is BillOperationSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  // Reload unbilled customers after successful generation
-                  _loadUnbilledCustomers();
-                } else if (state is BillError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.message),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              child: _buildCustomerList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCustomerList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              style: const TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadUnbilledCustomers,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_unbilledCustomers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle_outline, size: 64, color: Colors.green[300]),
-            const SizedBox(height: 16),
-            const Text(
-              'All customers have bills for this period',
-              style: TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _unbilledCustomers.length,
-      itemBuilder: (context, index) {
-        final customer = _unbilledCustomers[index];
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: CircleAvatar(
-              backgroundColor: Colors.green,
-              child: Text(
-                customer.name[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-            title: Text(
-              customer.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (customer.phone != null) ...[
-                  const SizedBox(height: 4),
-                  Text('Phone: ${customer.phone}'),
-                ],
-                if (customer.address != null) ...[
-                  const SizedBox(height: 2),
-                  Text('Address: ${customer.address}'),
-                ],
-              ],
-            ),
-            trailing: ElevatedButton.icon(
-              onPressed: () => _generateBill(customer.id, customer.name),
-              icon: const Icon(Icons.receipt_long, size: 18),
-              label: const Text('Generate'),
-              style: ElevatedButton.styleFrom(
+      body: BlocListener<BillBloc, BillState>(
+        listener: (context, state) {
+          if (state is BillOperationSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
                 backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
               ),
-            ),
+            );
+            // Optionally reset or navigate away
+          } else if (state is BillError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else if (state is LastBillDateLoaded) {
+            setState(() {
+              if (state.date != null) {
+                // Smart Start Date: Day after last bill
+                _startDate = state.date!.add(const Duration(days: 1));
+              } else {
+                // Default logic if no previous bills:
+                // Suggest first day of current month as default for new customers
+                final now = DateTime.now();
+                _startDate = DateTime(now.year, now.month, 1);
+              }
+              // Ensure end date is sane
+              if (_endDate.isBefore(_startDate)) {
+                _endDate = DateTime.now();
+              }
+              _updateDateControllers();
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Start date updated based on history')),
+            );
+          }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Customer Selector
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Select Customer',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_isLoadingCustomers)
+                        const Center(child: CircularProgressIndicator())
+                      else if (_customerError != null)
+                        Text('Error: $_customerError',
+                            style: const TextStyle(color: Colors.red))
+                      else
+                        DropdownButtonFormField<Customer>(
+                          value: _selectedCustomer,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person),
+                            hintText: 'Choose a customer',
+                          ),
+                          items: _customers.map((customer) {
+                            return DropdownMenuItem(
+                              value: customer,
+                              child: Text(customer.name),
+                            );
+                          }).toList(),
+                          onChanged: _onCustomerSelected,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Date Range Selector
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Billing Period',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _startDateController,
+                              readOnly: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Start Date',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.calendar_today),
+                              ),
+                              onTap: () => _selectDate(context, true),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _endDateController,
+                              readOnly: true,
+                              decoration: const InputDecoration(
+                                labelText: 'End Date',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.event),
+                              ),
+                              onTap: () => _selectDate(context, false),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Generate Button
+              BlocBuilder<BillBloc, BillState>(
+                builder: (context, state) {
+                  if (state is BillLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return ElevatedButton.icon(
+                    onPressed: _generateBill,
+                    icon: const Icon(Icons.receipt_long, size: 24),
+                    label: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'GENERATE BILL',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

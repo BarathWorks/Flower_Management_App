@@ -41,6 +41,106 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
     );
   }
 
+  void _showAddPaymentDialog(BuildContext context, Bill bill) {
+    final amountController = TextEditingController(
+      text: (bill.netAmount - bill.paidAmount).toStringAsFixed(2),
+    );
+    final notesController = TextEditingController();
+    DateTime selectedDate = DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Text('Add Payment', style: AppTypography.titleLarge),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: amountController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                style: AppTypography.bodyMedium,
+                decoration: const InputDecoration(
+                  labelText: 'Amount',
+                  prefixText: '₹ ',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime.now(),
+                  );
+                  if (date != null) {
+                    setState(() => selectedDate = date);
+                  }
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Date',
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  child: Text(
+                    AppFormatters.formatDate(selectedDate),
+                    style: AppTypography.bodyMedium,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              TextField(
+                controller: notesController,
+                style: AppTypography.bodyMedium,
+                decoration: const InputDecoration(
+                  labelText: 'Notes (Optional)',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: AppTypography.bodyMedium),
+            ),
+            TextButton(
+              onPressed: () {
+                final amount = double.tryParse(amountController.text);
+                if (amount == null || amount <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid amount')),
+                  );
+                  return;
+                }
+
+                context.read<BillBloc>().add(
+                      AddPaymentEvent(
+                        billId: bill.id,
+                        amount: amount,
+                        date: selectedDate,
+                        notes: notesController.text.isEmpty
+                            ? null
+                            : notesController.text,
+                      ),
+                    );
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Add Payment',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.successGreen,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<BillBloc, BillState>(listener: (context, state) {
@@ -406,10 +506,103 @@ class _BillDetailsScreenState extends State<BillDetailsScreen> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Paid Amount',
+                                  style: AppTypography.bodyMedium),
+                              Text(
+                                AppFormatters.formatCurrency(bill.paidAmount),
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: AppColors.successGreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Balance Due',
+                                  style: AppTypography.titleLarge),
+                              Text(
+                                AppFormatters.formatCurrency(
+                                    bill.netAmount - bill.paidAmount),
+                                style: AppTypography.titleLarge.copyWith(
+                                  color: (bill.netAmount - bill.paidAmount) > 0
+                                      ? AppColors.error
+                                      : AppColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: AppSpacing.lg),
+                    // Payment History
+                    if (bill.payments.isNotEmpty) ...[
+                      Text('Payment History',
+                          style: AppTypography.headlineMedium),
+                      const SizedBox(height: AppSpacing.md),
+                      ...bill.payments.map((payment) => Container(
+                            margin:
+                                const EdgeInsets.only(bottom: AppSpacing.md),
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceDark,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppFormatters.formatDate(payment.date),
+                                      style: AppTypography.bodyMedium,
+                                    ),
+                                    if (payment.notes != null &&
+                                        payment.notes!.isNotEmpty)
+                                      Text(
+                                        payment.notes!,
+                                        style: AppTypography.bodySmall.copyWith(
+                                            color: AppColors.textSecondary),
+                                      ),
+                                  ],
+                                ),
+                                Text(
+                                  AppFormatters.formatCurrency(payment.amount),
+                                  style: AppTypography.titleMedium.copyWith(
+                                    color: AppColors.successGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
+
                     const SizedBox(height: AppSpacing.xl),
+                    // Add Payment Button
+                    if (bill.status != 'PAID') ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showAddPaymentDialog(context, bill),
+                          icon: const Icon(Icons.add_card),
+                          label: const Text('Add Payment'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryEmerald,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
                     // Print Button
                     SizedBox(
                       width: double.infinity,
