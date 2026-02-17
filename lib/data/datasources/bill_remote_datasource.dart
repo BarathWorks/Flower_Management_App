@@ -44,7 +44,21 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
       // Get bill header with customer name
       final billResult = await database.connection.execute(
         '''
-        SELECT b.*, c.name as customer_name
+        SELECT 
+          b.id,
+          b.bill_number,
+          b.customer_id,
+          b.bill_year,
+          b.bill_month,
+          b.total_quantity,
+          b.total_amount,
+          b.total_commission,
+          b.total_expense,
+          b.net_amount,
+          b.status,
+          b.generated_at,
+          COALESCE(b.total_advance, 0) as total_advance,
+          c.name as customer_name
         FROM bills b
         JOIN customers c ON b.customer_id = c.id
         WHERE b.id = \$1
@@ -100,16 +114,16 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
         id: billRow[0] as String,
         billNumber: billRow[1] as String,
         customerId: billRow[2] as String,
-        customerName: billRow[12] as String,
+        customerName: billRow[13] as String,
         billYear: billRow[3] as int,
         billMonth: billRow[4] as int,
         totalQuantity: TypeConverters.toDouble(billRow[5]),
         totalAmount: TypeConverters.toDouble(billRow[6]),
         totalCommission: TypeConverters.toDouble(billRow[7]),
-        totalAdvance: TypeConverters.toDouble(billRow[8]),
-        totalExpense: TypeConverters.toDouble(billRow[9]),
-        netAmount: TypeConverters.toDouble(billRow[10]),
-        status: billRow[11] as String,
+        totalAdvance: TypeConverters.toDouble(billRow[12]),
+        totalExpense: TypeConverters.toDouble(billRow[8]),
+        netAmount: TypeConverters.toDouble(billRow[9]),
+        status: billRow[10] as String,
         generatedAt: generatedAt,
         items: items,
       );
@@ -135,7 +149,21 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
     try {
       final result = await database.connection.execute(
         '''
-        SELECT b.*, c.name as customer_name
+        SELECT 
+          b.id,
+          b.bill_number,
+          b.customer_id,
+          b.bill_year,
+          b.bill_month,
+          b.total_quantity,
+          b.total_amount,
+          b.total_commission,
+          b.total_expense,
+          b.net_amount,
+          b.status,
+          b.generated_at,
+          COALESCE(b.total_advance, 0) as total_advance,
+          c.name as customer_name
         FROM bills b
         JOIN customers c ON b.customer_id = c.id
         ORDER BY b.generated_at DESC
@@ -147,17 +175,17 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
           id: row[0] as String,
           billNumber: row[1] as String,
           customerId: row[2] as String,
-          customerName: row[12] as String,
+          customerName: row[13] as String,
           billYear: row[3] as int,
           billMonth: row[4] as int,
           totalQuantity: TypeConverters.toDouble(row[5]),
           totalAmount: TypeConverters.toDouble(row[6]),
           totalCommission: TypeConverters.toDouble(row[7]),
-          totalAdvance: TypeConverters.toDouble(row[8]),
-          totalExpense: TypeConverters.toDouble(row[9]),
-          netAmount: TypeConverters.toDouble(row[10]),
-          status: row[11] as String,
-          generatedAt: row[12] as DateTime,
+          totalAdvance: TypeConverters.toDouble(row[12]),
+          totalExpense: TypeConverters.toDouble(row[8]),
+          netAmount: TypeConverters.toDouble(row[9]),
+          status: row[10] as String,
+          generatedAt: row[11] as DateTime,
           items: const [],
         );
       }).toList();
@@ -171,7 +199,21 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
     try {
       final result = await database.connection.execute(
         '''
-        SELECT b.*, c.name as customer_name
+        SELECT 
+          b.id,
+          b.bill_number,
+          b.customer_id,
+          b.bill_year,
+          b.bill_month,
+          b.total_quantity,
+          b.total_amount,
+          b.total_commission,
+          b.total_expense,
+          b.net_amount,
+          b.status,
+          b.generated_at,
+          COALESCE(b.total_advance, 0) as total_advance,
+          c.name as customer_name
         FROM bills b
         JOIN customers c ON b.customer_id = c.id
         WHERE b.customer_id = \$1
@@ -185,17 +227,17 @@ class BillRemoteDataSourceImpl implements BillRemoteDataSource {
           id: row[0] as String,
           billNumber: row[1] as String,
           customerId: row[2] as String,
-          customerName: row[12] as String,
+          customerName: row[13] as String,
           billYear: row[3] as int,
           billMonth: row[4] as int,
           totalQuantity: TypeConverters.toDouble(row[5]),
           totalAmount: TypeConverters.toDouble(row[6]),
           totalCommission: TypeConverters.toDouble(row[7]),
-          totalAdvance: TypeConverters.toDouble(row[8]),
-          totalExpense: TypeConverters.toDouble(row[9]),
-          netAmount: TypeConverters.toDouble(row[10]),
-          status: row[11] as String,
-          generatedAt: row[12] as DateTime,
+          totalAdvance: TypeConverters.toDouble(row[12]),
+          totalExpense: TypeConverters.toDouble(row[8]),
+          netAmount: TypeConverters.toDouble(row[9]),
+          status: row[10] as String,
+          generatedAt: row[11] as DateTime,
           items: const [],
         );
       }).toList();
